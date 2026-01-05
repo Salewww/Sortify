@@ -33,15 +33,23 @@ export default function NewClientPage() {
   useEffect(() => {
     async function loadPacks() {
       const supabase = createClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('packs')
         .select('*')
         .order('name');
+
+      if (error) {
+        console.error('Error loading packs:', error);
+        alert('Failed to load template packs. Please ensure the database is set up correctly.');
+        return;
+      }
 
       if (data) {
         setPacks(data);
         if (data.length > 0) {
           setSelectedPackId(data[0].id);
+        } else {
+          alert('No template packs found. Please run the database seed migration first.');
         }
       }
     }
@@ -66,13 +74,26 @@ export default function NewClientPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validation
+    if (!selectedPackId) {
+      alert('Please select a template pack');
+      return;
+    }
+
+    if (contacts.some(c => !c.name || !c.email)) {
+      alert('Please fill in all contact details');
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
 
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw new Error('Authentication error: ' + userError.message);
       if (!user) throw new Error('Not authenticated');
 
       // Create client
@@ -189,7 +210,8 @@ export default function NewClientPage() {
       router.push(`/dashboard/clients/${client.id}`);
     } catch (error: any) {
       console.error('Error creating client:', error);
-      alert('Failed to create client: ' + error.message);
+      const errorMessage = error?.message || error?.error_description || JSON.stringify(error) || 'Unknown error occurred';
+      alert('Failed to create client: ' + errorMessage);
       setLoading(false);
     }
   };
