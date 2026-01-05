@@ -3,9 +3,9 @@ import { notFound } from 'next/navigation';
 import { calculateProgress } from '@/lib/utils';
 import PortalTaskCard from '@/components/PortalTaskCard';
 
-export default async function ClientPortalPage({ params }: { params: { token: string } }) {
+export default async function ClientPortalPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
   const supabase = await createClient();
-  const { token } = params;
 
   // Fetch client by portal token (no auth required)
   const { data: client, error } = await supabase

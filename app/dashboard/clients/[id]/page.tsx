@@ -4,9 +4,9 @@ import { formatDateTime, calculateProgress } from '@/lib/utils';
 import Link from 'next/link';
 import ClientActions from '@/components/ClientActions';
 
-export default async function ClientDetailPage({ params }: { params: { id: string } }) {
+export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
-  const { id } = params;
+  const { id } = await params;
 
   const {
     data: { user },

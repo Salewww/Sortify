@@ -206,7 +206,8 @@ export default function NewClientPage() {
         },
       });
 
-      // Redirect to client page
+      // Show success message and redirect
+      alert(`✅ Client "${clientName}" created successfully!`);
       router.push(`/dashboard/clients/${client.id}`);
     } catch (error: any) {
       console.error('Error creating client:', error);
