@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { formatDateTime, calculateProgress } from '@/lib/utils';
 import Link from 'next/link';
 import ClientActions from '@/components/ClientActions';
+import PortalLinkCard from '@/components/PortalLinkCard';
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -129,29 +130,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       </div>
 
       {/* Portal Link */}
-      <div className="card mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Client Portal Link</h2>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={portalUrl}
-            readOnly
-            className="input flex-1 font-mono text-sm"
-          />
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(portalUrl);
-              alert('Link copied to clipboard!');
-            }}
-            className="btn-secondary"
-          >
-            Copy Link
-          </button>
-        </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Share this link with your client contacts to give them access to the checklist.
-        </p>
-      </div>
+      <PortalLinkCard portalUrl={portalUrl} />
 
       {/* Contacts */}
       <div className="card mb-8">
