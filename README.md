@@ -301,6 +301,30 @@ VALUES (
 - [ ] Check audit logs are recording
 - [ ] Update Resend domain if using custom domain
 
+## Troubleshooting
+
+### "Error creating client" when adding a new client
+
+If you see this error, it's likely because the seed data hasn't been loaded yet:
+
+1. Go to Supabase dashboard → **SQL Editor**
+2. Run the seed migration: `supabase/migrations/20240101000001_seed_data.sql`
+3. Verify the packs exist by running: `SELECT * FROM packs;`
+4. You should see 4 template packs (Basic Bookkeeping, E-commerce, etc.)
+5. Refresh the "New Client" page and try again
+
+### No template packs available
+
+Make sure you've run BOTH migrations in order:
+1. First: `20240101000000_initial_schema.sql` (creates tables)
+2. Second: `20240101000001_seed_data.sql` (adds template packs and tasks)
+
+### Email reminders not sending
+
+- Verify your Resend API key is correct in `.env.local`
+- Make sure you've verified your sending domain in Resend
+- Check the Resend dashboard for delivery logs
+
 ## Support & Contributing
 
 For issues or questions:
