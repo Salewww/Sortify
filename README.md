@@ -46,11 +46,12 @@ npm install
    - `anon` public key
    - `service_role` key (keep this secret!)
 
-3. Run the database migrations:
+3. Run the database migrations **in order**:
    - Go to **SQL Editor** in Supabase dashboard
    - Copy and paste the contents of `supabase/migrations/20240101000000_initial_schema.sql`
    - Click **Run**
-   - Then do the same for `supabase/migrations/20240101000001_seed_data.sql`
+   - Then run `supabase/migrations/20240101000001_seed_data.sql`
+   - Finally run `supabase/migrations/20240101000002_auto_create_user.sql`
 
 4. Set up Storage bucket:
    - Go to **Storage** in Supabase dashboard
@@ -303,9 +304,18 @@ VALUES (
 
 ## Troubleshooting
 
-### "Error creating client" when adding a new client
+### "Error creating client" - Foreign key constraint violation
 
-If you see this error, it's likely because the seed data hasn't been loaded yet:
+If you see `violates foreign key constraint "clients_owner_user_id_fkey"`, it means your auth user hasn't been added to the public.users table:
+
+1. Go to Supabase dashboard → **SQL Editor**
+2. Run the migration: `supabase/migrations/20240101000002_auto_create_user.sql`
+3. This will create a trigger AND backfill your existing user
+4. Try creating a client again
+
+### "Error creating client" - No template packs
+
+If you see this error, the seed data hasn't been loaded yet:
 
 1. Go to Supabase dashboard → **SQL Editor**
 2. Run the seed migration: `supabase/migrations/20240101000001_seed_data.sql`
@@ -315,9 +325,10 @@ If you see this error, it's likely because the seed data hasn't been loaded yet:
 
 ### No template packs available
 
-Make sure you've run BOTH migrations in order:
+Make sure you've run ALL migrations in order:
 1. First: `20240101000000_initial_schema.sql` (creates tables)
 2. Second: `20240101000001_seed_data.sql` (adds template packs and tasks)
+3. Third: `20240101000002_auto_create_user.sql` (auto-creates users)
 
 ### Email reminders not sending
 
