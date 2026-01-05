@@ -1,12 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePortalToken } from '@/lib/utils';
+import { Database } from '@/types/database';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const {
@@ -24,14 +26,13 @@ export async function POST(
     const { error } = await supabase
       .from('clients')
       .update({ portal_token: newToken })
-      .eq('id', params.id)
-      .eq('owner_user_id', user.id);
+      .match({ id, owner_user_id: user.id });
 
     if (error) throw error;
 
     // Create audit event
     await supabase.from('audit_events').insert({
-      client_id: params.id,
+      client_id: id,
       actor_type: 'bookkeeper',
       actor_identifier: user.id,
       event_type: 'portal_token_rotated',

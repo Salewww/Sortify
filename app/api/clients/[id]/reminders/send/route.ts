@@ -6,9 +6,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const {
@@ -38,7 +39,7 @@ export async function POST(
           )
         )
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('owner_user_id', user.id)
       .single();
 

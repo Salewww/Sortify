@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { token: string; instanceId: string } }
+  { params }: { params: Promise<{ token: string; instanceId: string }> }
 ) {
   try {
+    const { token, instanceId } = await params;
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const email = formData.get('email') as string;
@@ -20,7 +21,7 @@ export async function POST(
     const { data: client } = await supabase
       .from('clients')
       .select('id')
-      .eq('portal_token', params.token)
+      .eq('portal_token', token)
       .single();
 
     if (!client) {
@@ -29,7 +30,7 @@ export async function POST(
 
     // Upload file to Supabase Storage
     const fileExt = file.name.split('.').pop();
-    const fileName = `${client.id}/${params.instanceId}/${Date.now()}.${fileExt}`;
+    const fileName = `${client.id}/${instanceId}/${Date.now()}.${fileExt}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('task-proofs')
@@ -54,7 +55,7 @@ export async function POST(
       .update({
         proof_file_url: publicUrl,
       })
-      .eq('id', params.instanceId);
+      .eq('id', instanceId);
 
     if (updateError) throw updateError;
 
@@ -65,7 +66,7 @@ export async function POST(
       actor_identifier: email,
       event_type: 'file_uploaded',
       metadata_json: {
-        task_instance_id: params.instanceId,
+        task_instance_id: instanceId,
         file_name: file.name,
         file_url: publicUrl,
       },

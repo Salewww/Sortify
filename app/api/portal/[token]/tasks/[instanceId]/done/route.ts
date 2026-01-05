@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { token: string; instanceId: string } }
+  { params }: { params: Promise<{ token: string; instanceId: string }> }
 ) {
   try {
+    const { token, instanceId } = await params;
     const { email } = await request.json();
 
     if (!email) {
@@ -18,7 +19,7 @@ export async function POST(
     const { data: client } = await supabase
       .from('clients')
       .select('id')
-      .eq('portal_token', params.token)
+      .eq('portal_token', token)
       .single();
 
     if (!client) {
@@ -33,7 +34,7 @@ export async function POST(
         completed_at: new Date().toISOString(),
         completed_by_email: email,
       })
-      .eq('id', params.instanceId);
+      .eq('id', instanceId);
 
     if (error) throw error;
 
@@ -43,7 +44,7 @@ export async function POST(
       actor_type: 'client_contact',
       actor_identifier: email,
       event_type: 'task_marked_done',
-      metadata_json: { task_instance_id: params.instanceId },
+      metadata_json: { task_instance_id: instanceId },
     });
 
     return NextResponse.json({ success: true });
