@@ -46,8 +46,8 @@ Guidelines:
 - Mark truly critical tasks as blocking
 - Keep instructions practical and specific`;
 
-    // Initialize Gemini model
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Initialize Gemini model (using gemini-pro as stable production model)
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     // Generate content
     const result = await model.generateContent(prompt);

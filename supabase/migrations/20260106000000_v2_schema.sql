@@ -2,7 +2,7 @@
 -- This migration adds v2-specific tables and columns without breaking v1.0
 
 -- ============================================
--- FIRMS TABLE (New for v2.0)
+-- FIRMS TABLE (New for v2.0) - CREATE FIRST
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.firms (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.firms (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_firms_created ON public.firms(created_at);
+CREATE INDEX IF NOT EXISTS idx_firms_created ON public.firms(created_at);
 
 ALTER TABLE public.firms ENABLE ROW LEVEL SECURITY;
 
@@ -26,14 +26,14 @@ ALTER TABLE public.firms ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Firm members can view their firm" ON public.firms
   FOR SELECT USING (
     id IN (
-      SELECT firm_id FROM public.users WHERE users.id = auth.uid()
+      SELECT firm_id FROM public.users WHERE users.id = auth.uid() AND firm_id IS NOT NULL
     )
   );
 
 CREATE POLICY "Firm owners can update their firm" ON public.firms
   FOR UPDATE USING (
     id IN (
-      SELECT firm_id FROM public.users WHERE users.id = auth.uid()
+      SELECT firm_id FROM public.users WHERE users.id = auth.uid() AND firm_id IS NOT NULL
     )
   );
 
@@ -66,7 +66,7 @@ INSERT INTO public.platforms (id, key, name) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
--- TEMPLATE PACKS (Extend from packs)
+-- TEMPLATE PACKS (Extend from packs) - ADD COLUMNS FIRST
 -- ============================================
 ALTER TABLE public.packs ADD COLUMN IF NOT EXISTS is_system BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.packs ADD COLUMN IF NOT EXISTS country_code TEXT DEFAULT 'US';
@@ -86,7 +86,7 @@ ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS platform_tag TEXT;
 -- ============================================
 -- CLIENT TASK INSTANCES (v2.0 extensions)
 -- ============================================
--- Expand status enum to support verification workflow
+-- Drop existing constraint first, then add new one
 ALTER TABLE public.client_task_instances DROP CONSTRAINT IF EXISTS client_task_instances_status_check;
 ALTER TABLE public.client_task_instances ADD CONSTRAINT client_task_instances_status_check
   CHECK (status IN ('pending', 'in_progress', 'needs_help', 'submitted', 'needs_verification', 'completed', 'blocked', 'rejected', 'done'));
@@ -129,11 +129,11 @@ CREATE TABLE IF NOT EXISTS public.documents (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_documents_owner ON public.documents(owner_type, owner_id);
-CREATE INDEX idx_documents_firm ON public.documents(firm_id);
-CREATE INDEX idx_documents_type ON public.documents(type);
-CREATE INDEX idx_documents_issue_date ON public.documents(issue_date);
-CREATE INDEX idx_documents_created_at ON public.documents(created_at);
+CREATE INDEX IF NOT EXISTS idx_documents_owner ON public.documents(owner_type, owner_id);
+CREATE INDEX IF NOT EXISTS idx_documents_firm ON public.documents(firm_id);
+CREATE INDEX IF NOT EXISTS idx_documents_type ON public.documents(type);
+CREATE INDEX IF NOT EXISTS idx_documents_issue_date ON public.documents(issue_date);
+CREATE INDEX IF NOT EXISTS idx_documents_created_at ON public.documents(created_at);
 
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
 
@@ -146,7 +146,7 @@ CREATE POLICY "Solo users can manage own documents" ON public.documents
 -- Firm users can manage documents for their clients
 CREATE POLICY "Firm users can manage client documents" ON public.documents
   FOR ALL USING (
-    EXISTS (
+    firm_id IS NOT NULL AND EXISTS (
       SELECT 1 FROM public.users
       WHERE users.id = auth.uid()
       AND users.firm_id = documents.firm_id
@@ -168,9 +168,9 @@ CREATE TABLE IF NOT EXISTS public.help_requests (
   resolved_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_help_requests_task ON public.help_requests(client_task_id);
-CREATE INDEX idx_help_requests_status ON public.help_requests(status);
-CREATE INDEX idx_help_requests_created_at ON public.help_requests(created_at);
+CREATE INDEX IF NOT EXISTS idx_help_requests_task ON public.help_requests(client_task_id);
+CREATE INDEX IF NOT EXISTS idx_help_requests_status ON public.help_requests(status);
+CREATE INDEX IF NOT EXISTS idx_help_requests_created_at ON public.help_requests(created_at);
 
 ALTER TABLE public.help_requests ENABLE ROW LEVEL SECURITY;
 
@@ -213,17 +213,17 @@ CREATE TABLE IF NOT EXISTS public.ai_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_ai_logs_firm ON public.ai_logs(firm_id);
-CREATE INDEX idx_ai_logs_user ON public.ai_logs(user_id);
-CREATE INDEX idx_ai_logs_operation ON public.ai_logs(operation_type);
-CREATE INDEX idx_ai_logs_created_at ON public.ai_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_logs_firm ON public.ai_logs(firm_id);
+CREATE INDEX IF NOT EXISTS idx_ai_logs_user ON public.ai_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_logs_operation ON public.ai_logs(operation_type);
+CREATE INDEX IF NOT EXISTS idx_ai_logs_created_at ON public.ai_logs(created_at);
 
 ALTER TABLE public.ai_logs ENABLE ROW LEVEL SECURITY;
 
 -- Firm users can view their AI logs
 CREATE POLICY "Firm users can view AI logs" ON public.ai_logs
   FOR SELECT USING (
-    firm_id IN (
+    firm_id IS NOT NULL AND firm_id IN (
       SELECT firm_id FROM public.users WHERE users.id = auth.uid()
     )
   );
@@ -242,32 +242,59 @@ ALTER TABLE public.reminder_events ADD COLUMN IF NOT EXISTS body_text TEXT;
 -- ============================================
 -- TRIGGERS FOR UPDATED_AT
 -- ============================================
+DROP TRIGGER IF EXISTS update_firms_updated_at ON public.firms;
 CREATE TRIGGER update_firms_updated_at BEFORE UPDATE ON public.firms
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_documents_updated_at ON public.documents;
 CREATE TRIGGER update_documents_updated_at BEFORE UPDATE ON public.documents
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
 -- STORAGE BUCKETS (v2.0)
 -- ============================================
--- Create storage buckets for documents
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('documents-v2', 'documents-v2', false)
-ON CONFLICT (id) DO NOTHING;
+-- Note: Storage bucket creation may need to be done via Supabase Dashboard
+-- If this fails, create the bucket manually in the Supabase Dashboard
+DO $$
+BEGIN
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('documents-v2', 'documents-v2', false)
+  ON CONFLICT (id) DO NOTHING;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Storage bucket creation skipped - create manually in Dashboard if needed';
+END $$;
 
--- Storage policies for documents-v2 bucket
-CREATE POLICY "Authenticated users can upload documents"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'documents-v2');
+-- Storage policies for documents-v2 bucket (if bucket exists)
+DO $$
+BEGIN
+  -- Upload policy
+  CREATE POLICY "Authenticated users can upload documents"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'documents-v2');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can view their own documents"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (bucket_id = 'documents-v2');
+DO $$
+BEGIN
+  -- View policy
+  CREATE POLICY "Users can view their own documents"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (bucket_id = 'documents-v2');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can delete their own documents"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'documents-v2');
+DO $$
+BEGIN
+  -- Delete policy
+  CREATE POLICY "Users can delete their own documents"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'documents-v2');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
