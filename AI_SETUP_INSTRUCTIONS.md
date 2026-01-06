@@ -121,12 +121,12 @@ If you're deploying to Vercel:
 
 ## AI Cost & Pricing Notes
 
-- **Model Used:** Google Gemini 1.5 Flash (gemini-1.5-flash-002)
+- **Model Used:** Google Gemini 2.5 Flash (gemini-2.5-flash)
 - **SDK Version:** @google/generative-ai v0.24+
 - **Free Tier:** Google AI Studio provides generous free quota (15 requests per minute, 1 million tokens per minute, 1500 requests per day)
 - **Cost During MVP:** $0 with free tier - perfect for early usage and testing
 - **Paid Pricing:** After exceeding free tier: ~$0.01-0.02 per pack generation
-- **Optimization:** Gemini 1.5 Flash is optimized for fast, lightweight tasks including structured JSON generation
+- **Optimization:** Gemini 2.5 Flash is the latest model optimized for fast, lightweight tasks including structured JSON generation
 - More info: https://ai.google.dev/pricing
 
 **Provider-Agnostic Architecture:** Our implementation is designed to easily switch between AI providers (Gemini, Claude, ChatGPT) by simply swapping the API integration. The prompt engineering and task structure remain consistent.

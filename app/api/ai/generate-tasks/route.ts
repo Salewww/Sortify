@@ -48,9 +48,9 @@ Guidelines:
 - Keep instructions practical and specific`;
 
     // Initialize Gemini model
-    // Using gemini-1.5-flash-002 which is the stable model identifier for SDK v0.24+
+    // Using gemini-2.5-flash which is available in the API
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash-002',
+      model: 'gemini-2.5-flash',
     });
 
     // Generate content
