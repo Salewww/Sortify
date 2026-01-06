@@ -25,6 +25,14 @@ interface PackTask {
   };
 }
 
+interface GeneratedTask {
+  title: string;
+  why: string;
+  instructions: string;
+  platform: string;
+  isBlocking: boolean;
+}
+
 export default function PacksPage() {
   const { showToast } = useToast();
   const [packs, setPacks] = useState<Pack[]>([]);
@@ -34,6 +42,9 @@ export default function PacksPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPackName, setNewPackName] = useState('');
   const [newPackDescription, setNewPackDescription] = useState('');
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiGeneratedTasks, setAiGeneratedTasks] = useState<GeneratedTask[]>([]);
+  const [showTaskEditor, setShowTaskEditor] = useState(false);
 
   useEffect(() => {
     loadPacks();
@@ -80,6 +91,50 @@ export default function PacksPage() {
     }
   };
 
+  const generateTasksWithAI = async () => {
+    if (!newPackName.trim()) {
+      showToast('Please enter a pack name first', 'error');
+      return;
+    }
+
+    setGeneratingAI(true);
+    try {
+      const response = await fetch('/api/ai/generate-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packName: newPackName,
+          packDescription: newPackDescription,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to generate tasks');
+      }
+
+      const { tasks } = await response.json();
+      setAiGeneratedTasks(tasks);
+      setShowTaskEditor(true);
+      showToast('Tasks generated successfully! Review and edit them below.', 'success');
+    } catch (error: any) {
+      console.error('Error generating tasks:', error);
+      showToast(error.message || 'Failed to generate tasks with AI', 'error');
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  const updateTask = (index: number, field: keyof GeneratedTask, value: string | boolean) => {
+    const updated = [...aiGeneratedTasks];
+    updated[index] = { ...updated[index], [field]: value };
+    setAiGeneratedTasks(updated);
+  };
+
+  const removeTask = (index: number) => {
+    setAiGeneratedTasks(aiGeneratedTasks.filter((_, i) => i !== index));
+  };
+
   const createCustomPack = async () => {
     if (!newPackName.trim()) {
       showToast('Please enter a pack name', 'error');
@@ -94,7 +149,8 @@ export default function PacksPage() {
       return;
     }
 
-    const { data, error } = await supabase
+    // Create the pack
+    const { data: pack, error: packError } = await supabase
       .from('packs')
       .insert({
         name: newPackName,
@@ -104,16 +160,66 @@ export default function PacksPage() {
       .select()
       .single();
 
-    if (error) {
-      console.error('Error creating pack:', error);
+    if (packError) {
+      console.error('Error creating pack:', packError);
       showToast('Failed to create pack', 'error');
       return;
     }
 
-    showToast('Pack created successfully!', 'success');
+    // If we have AI-generated tasks, create them
+    if (aiGeneratedTasks.length > 0) {
+      try {
+        // First, create the tasks
+        const tasksToInsert = aiGeneratedTasks.map((task) => ({
+          platform_id: null, // Will need to be set manually or matched
+          title: task.title,
+          why_text: task.why,
+          instructions_md: task.instructions,
+          is_blocking: task.isBlocking,
+          owner_user_id: user.id,
+        }));
+
+        const { data: createdTasks, error: tasksError } = await supabase
+          .from('tasks')
+          .insert(tasksToInsert)
+          .select();
+
+        if (tasksError) {
+          console.error('Error creating tasks:', tasksError);
+          showToast('Pack created but tasks failed to save. You can add them manually.', 'error');
+        } else if (createdTasks) {
+          // Link tasks to the pack
+          const packTasksToInsert = createdTasks.map((task, index) => ({
+            pack_id: pack.id,
+            task_id: task.id,
+            sort_order: index + 1,
+          }));
+
+          const { error: packTasksError } = await supabase
+            .from('pack_tasks')
+            .insert(packTasksToInsert);
+
+          if (packTasksError) {
+            console.error('Error linking tasks to pack:', packTasksError);
+            showToast('Pack and tasks created but linking failed', 'error');
+          } else {
+            showToast(`Pack created with ${createdTasks.length} tasks!`, 'success');
+          }
+        }
+      } catch (error) {
+        console.error('Error saving tasks:', error);
+        showToast('Pack created but tasks failed to save', 'error');
+      }
+    } else {
+      showToast('Pack created successfully!', 'success');
+    }
+
+    // Reset and close
     setShowCreateModal(false);
+    setShowTaskEditor(false);
     setNewPackName('');
     setNewPackDescription('');
+    setAiGeneratedTasks([]);
     loadPacks();
   };
 
@@ -229,8 +335,8 @@ export default function PacksPage() {
 
       {/* Create Pack Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full my-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Create Custom Pack</h3>
 
             <div className="space-y-4">
@@ -244,6 +350,7 @@ export default function PacksPage() {
                   onChange={(e) => setNewPackName(e.target.value)}
                   className="input"
                   placeholder="e.g., Migration from Previous Accountant"
+                  disabled={showTaskEditor}
                 />
               </div>
 
@@ -257,22 +364,134 @@ export default function PacksPage() {
                   className="input"
                   rows={3}
                   placeholder="Brief description of what this pack includes..."
+                  disabled={showTaskEditor}
                 />
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> After creating the pack, you'll need to add tasks to it manually through the database or a future task management interface.
-                </p>
-              </div>
+              {!showTaskEditor && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 012 0v4a1 1 0 11-2 0V9zm1-4a1 1 0 100 2 1 1 0 000-2z" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm text-blue-800 font-medium mb-2">
+                        Use AI to Generate Tasks
+                      </p>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Let AI analyze your pack name and description to automatically generate relevant onboarding tasks. You can review and edit them before saving.
+                      </p>
+                      <button
+                        onClick={generateTasksWithAI}
+                        disabled={generatingAI || !newPackName.trim()}
+                        className="btn-primary text-sm"
+                      >
+                        {generatingAI ? 'Generating with AI...' : '✨ Generate Tasks with AI'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Task Editor */}
+              {showTaskEditor && (
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      Generated Tasks ({aiGeneratedTasks.length})
+                    </h4>
+                    <button
+                      onClick={() => {
+                        setShowTaskEditor(false);
+                        setAiGeneratedTasks([]);
+                      }}
+                      className="text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      Clear & Regenerate
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {aiGeneratedTasks.map((task, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              value={task.title}
+                              onChange={(e) => updateTask(index, 'title', e.target.value)}
+                              className="input text-sm font-medium"
+                              placeholder="Task title"
+                            />
+                          </div>
+                          <button
+                            onClick={() => removeTask(index)}
+                            className="ml-2 text-red-600 hover:text-red-800"
+                            title="Remove task"
+                          >
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Why is this needed?
+                            </label>
+                            <input
+                              type="text"
+                              value={task.why}
+                              onChange={(e) => updateTask(index, 'why', e.target.value)}
+                              className="input text-sm"
+                              placeholder="Brief explanation"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Instructions
+                            </label>
+                            <textarea
+                              value={task.instructions}
+                              onChange={(e) => updateTask(index, 'instructions', e.target.value)}
+                              className="input text-sm"
+                              rows={3}
+                              placeholder="Step-by-step instructions"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={task.isBlocking}
+                                onChange={(e) => updateTask(index, 'isBlocking', e.target.checked)}
+                                className="rounded border-gray-300"
+                              />
+                              <span className="text-sm text-gray-700">Critical (Blocking)</span>
+                            </label>
+                            <div className="text-xs text-gray-500">
+                              Platform: {task.platform}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="flex gap-3 justify-end mt-6">
+            <div className="flex gap-3 justify-end mt-6 pt-4 border-t">
               <button
                 onClick={() => {
                   setShowCreateModal(false);
+                  setShowTaskEditor(false);
                   setNewPackName('');
                   setNewPackDescription('');
+                  setAiGeneratedTasks([]);
                 }}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
               >
@@ -281,8 +500,9 @@ export default function PacksPage() {
               <button
                 onClick={createCustomPack}
                 className="btn-primary"
+                disabled={generatingAI}
               >
-                Create Pack
+                {showTaskEditor ? `Create Pack with ${aiGeneratedTasks.length} Tasks` : 'Create Pack'}
               </button>
             </div>
           </div>
