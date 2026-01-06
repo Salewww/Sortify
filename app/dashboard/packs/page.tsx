@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { useToast } from '@/components/Toast';
 
 interface Pack {
   id: string;
@@ -25,10 +26,14 @@ interface PackTask {
 }
 
 export default function PacksPage() {
+  const { showToast } = useToast();
   const [packs, setPacks] = useState<Pack[]>([]);
   const [selectedPack, setSelectedPack] = useState<Pack | null>(null);
   const [packTasks, setPackTasks] = useState<PackTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPackName, setNewPackName] = useState('');
+  const [newPackDescription, setNewPackDescription] = useState('');
 
   useEffect(() => {
     loadPacks();
@@ -75,6 +80,43 @@ export default function PacksPage() {
     }
   };
 
+  const createCustomPack = async () => {
+    if (!newPackName.trim()) {
+      showToast('Please enter a pack name', 'error');
+      return;
+    }
+
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      showToast('You must be logged in to create a pack', 'error');
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('packs')
+      .insert({
+        name: newPackName,
+        description: newPackDescription || null,
+        owner_user_id: user.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating pack:', error);
+      showToast('Failed to create pack', 'error');
+      return;
+    }
+
+    showToast('Pack created successfully!', 'success');
+    setShowCreateModal(false);
+    setNewPackName('');
+    setNewPackDescription('');
+    loadPacks();
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -82,7 +124,16 @@ export default function PacksPage() {
   return (
     <div>
       <div className="mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Template Packs</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Template Packs</h1>
+          <p className="text-gray-600 mt-1">Manage and create custom onboarding template packs</p>
+        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="btn-primary"
+        >
+          + Create Custom Pack
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -175,6 +226,68 @@ export default function PacksPage() {
           added to their onboarding checklist.
         </p>
       </div>
+
+      {/* Create Pack Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Create Custom Pack</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pack Name *
+                </label>
+                <input
+                  type="text"
+                  value={newPackName}
+                  onChange={(e) => setNewPackName(e.target.value)}
+                  className="input"
+                  placeholder="e.g., Migration from Previous Accountant"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newPackDescription}
+                  onChange={(e) => setNewPackDescription(e.target.value)}
+                  className="input"
+                  rows={3}
+                  placeholder="Brief description of what this pack includes..."
+                />
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> After creating the pack, you'll need to add tasks to it manually through the database or a future task management interface.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewPackName('');
+                  setNewPackDescription('');
+                }}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createCustomPack}
+                className="btn-primary"
+              >
+                Create Pack
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

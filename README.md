@@ -51,7 +51,8 @@ npm install
    - Copy and paste the contents of `supabase/migrations/20240101000000_initial_schema.sql`
    - Click **Run**
    - Then run `supabase/migrations/20240101000001_seed_data.sql`
-   - Finally run `supabase/migrations/20240101000002_auto_create_user.sql`
+   - Then run `supabase/migrations/20240101000002_auto_create_user.sql`
+   - Finally run `supabase/migrations/20240101000003_migration_pack.sql` (adds Migration template pack)
 
 4. Set up Storage bucket:
    - Go to **Storage** in Supabase dashboard
@@ -390,7 +391,7 @@ DROP TABLE IF EXISTS client_contacts CASCADE;
 DROP TABLE IF EXISTS clients CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
--- Then re-run both migration files
+-- Then re-run all migration files in order
 ```
 
 ### Customizing Email Templates
