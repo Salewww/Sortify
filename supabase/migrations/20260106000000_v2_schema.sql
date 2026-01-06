@@ -103,10 +103,10 @@ END $$;
 -- SLOVENIA PLATFORMS (v2.0)
 -- ============================================
 INSERT INTO public.platforms (id, key, name) VALUES
-  ('edavki00-0000-0000-0000-000000000000', 'edavki', 'eDavki'),
-  ('ajpes000-0000-0000-0000-000000000000', 'ajpes', 'AJPES'),
-  ('banksi00-0000-0000-0000-000000000000', 'bank_si', 'Slovenska Banka'),
-  ('furs0000-0000-0000-0000-000000000000', 'furs', 'FURS')
+  ('eda00000-0000-0000-0000-000000000000', 'edavki', 'eDavki'),
+  ('ajp00000-0000-0000-0000-000000000000', 'ajpes', 'AJPES'),
+  ('ban00000-0000-0000-0000-000000000000', 'bank_si', 'Slovenska Banka'),
+  ('fur00000-0000-0000-0000-000000000000', 'furs', 'FURS')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================

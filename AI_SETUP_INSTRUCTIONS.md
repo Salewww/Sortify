@@ -121,7 +121,8 @@ If you're deploying to Vercel:
 
 ## AI Cost & Pricing Notes
 
-- **Model Used:** Google Gemini 1.5 Flash (Latest)
+- **Model Used:** Google Gemini 1.5 Flash (gemini-1.5-flash-002)
+- **SDK Version:** @google/generative-ai v0.24+
 - **Free Tier:** Google AI Studio provides generous free quota (15 requests per minute, 1 million tokens per minute, 1500 requests per day)
 - **Cost During MVP:** $0 with free tier - perfect for early usage and testing
 - **Paid Pricing:** After exceeding free tier: ~$0.01-0.02 per pack generation

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Initialize with API key - SDK will use the correct API version automatically
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
@@ -46,8 +47,11 @@ Guidelines:
 - Mark truly critical tasks as blocking
 - Keep instructions practical and specific`;
 
-    // Initialize Gemini model (using gemini-1.5-flash-latest for stable API)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+    // Initialize Gemini model
+    // Using gemini-1.5-flash-002 which is the stable model identifier for SDK v0.24+
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash-002',
+    });
 
     // Generate content
     const result = await model.generateContent(prompt);

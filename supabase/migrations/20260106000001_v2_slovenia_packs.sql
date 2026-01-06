@@ -20,8 +20,8 @@ ON CONFLICT (id) DO NOTHING;
 -- Tasks for SI-1: Normiran s.p. Starter
 INSERT INTO public.tasks (id, platform_id, title, why_text, instructions_md, is_blocking, proof_type, requires_verification, platform_tag) VALUES
   (
-    'si100000-0000-0000-0000-000000000001',
-    'edavki00-0000-0000-0000-000000000000',
+    'aaa00000-0000-0000-0000-000000000001',
+    'eda00000-0000-0000-0000-000000000000',
     'Shrani izdane račune (evidence)',
     'Izdani računi so osnova za ugotavljanje prihodkov pri normirani obdavčitvi. Shranite jih za morebitni pregled.',
     E'# Kako shraniti izdane račune\n\n1. Naložite vse izdane račune v sistem (PDF ali slika)\n2. Označite jih kot "Izdan račun"\n3. Sistem bo avtomatsko prebral znesek in datum (če bo mogoče)\n4. Račune hranite v digitalnem arhivu',
@@ -31,8 +31,8 @@ INSERT INTO public.tasks (id, platform_id, title, why_text, instructions_md, is_
     'documents'
   ),
   (
-    'si100000-0000-0000-0000-000000000002',
-    'edavki00-0000-0000-0000-000000000000',
+    'aaa00000-0000-0000-0000-000000000002',
+    'eda00000-0000-0000-0000-000000000000',
     'Shrani prejete račune (stroški)',
     'Prejeti računi so dokaz o stroških. Pri normirani obdavčitvi ne zmanjšujejo davčne osnove, a jih lahko potrebujete za evidence.',
     E'# Kako shraniti prejete račune\n\n1. Naložite prejete račune (nakupi, stroški)\n2. Označite jih kot "Prejet račun"\n3. Razvrstite po vrstah (material, storitve, oprema)\n4. Hranite jih za 10 let',
@@ -42,8 +42,8 @@ INSERT INTO public.tasks (id, platform_id, title, why_text, instructions_md, is_
     'documents'
   ),
   (
-    'si100000-0000-0000-0000-000000000003',
-    'edavki00-0000-0000-0000-000000000000',
+    'aaa00000-0000-0000-0000-000000000003',
+    'eda00000-0000-0000-0000-000000000000',
     'Oddaja dohodnine (letna obveznost)',
     'Normiranci morajo letno oddati napoved za odmero dohodnine. Rok je običajno do 31. marca naslednjega leta.',
     E'# Oddaja dohodnine za normirane s.p.\n\n1. Pripravite evidenco prihodkov (izdani računi)\n2. Vpišite prihodke v obrazec eDavki\n3. Sistem sam izračuna normiran odhodek (80% prihodkov)\n4. Preverite znižanja (olajšave, vzdrževani družinski člani)\n5. Oddajte do 31. marca',
@@ -56,9 +56,9 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Link tasks to pack SI-1
 INSERT INTO public.pack_tasks (pack_id, task_id, sort_order) VALUES
-  ('si000001-0000-0000-0000-000000000000', 'si100000-0000-0000-0000-000000000001', 1),
-  ('si000001-0000-0000-0000-000000000000', 'si100000-0000-0000-0000-000000000002', 2),
-  ('si000001-0000-0000-0000-000000000000', 'si100000-0000-0000-0000-000000000003', 3)
+  ('aaa00001-0000-0000-0000-000000000000', 'aaa00000-0000-0000-0000-000000000001', 1),
+  ('aaa00001-0000-0000-0000-000000000000', 'aaa00000-0000-0000-0000-000000000002', 2),
+  ('aaa00001-0000-0000-0000-000000000000', 'aaa00000-0000-0000-0000-000000000003', 3)
 ON CONFLICT DO NOTHING;
 
 -- ============================================
