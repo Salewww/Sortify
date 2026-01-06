@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/Toast';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ export default function LoginPage() {
             name: email.split('@')[0],
           });
 
-          alert('Account created! Please check your email to verify.');
+          showToast('Account created! Please check your email to verify.', 'success');
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({

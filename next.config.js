@@ -10,6 +10,9 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  env: {
+    APP_VERSION: process.env.PORT === '3007' ? 'v2' : 'v1',
+  },
 }
 
 export default nextConfig

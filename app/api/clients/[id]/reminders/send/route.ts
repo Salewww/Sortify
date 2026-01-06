@@ -69,7 +69,7 @@ export async function POST(
 
     // Send email
     const { error: emailError } = await resend.emails.send({
-      from: 'Sortify <onboarding@sortify.app>',
+      from: 'Sortify <onboarding@resend.dev>',
       to: primaryContact.email,
       subject: `${client.name} - Access Setup Reminder`,
       html: `

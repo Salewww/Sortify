@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { generatePortalToken } from '@/lib/utils';
+import { useToast } from '@/components/Toast';
 
 interface Pack {
   id: string;
@@ -19,6 +20,7 @@ interface Contact {
 
 export default function NewClientPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [packs, setPacks] = useState<Pack[]>([]);
   const [clientName, setClientName] = useState('');
@@ -40,7 +42,7 @@ export default function NewClientPage() {
 
       if (error) {
         console.error('Error loading packs:', error);
-        alert('Failed to load template packs. Please ensure the database is set up correctly.');
+        showToast('Failed to load template packs. Please ensure the database is set up correctly.', 'error');
         return;
       }
 
@@ -207,12 +209,12 @@ export default function NewClientPage() {
       });
 
       // Show success message and redirect
-      alert(`✅ Client "${clientName}" created successfully!`);
+      showToast(`Client "${clientName}" created successfully!`, 'success');
       router.push(`/dashboard/clients/${client.id}`);
     } catch (error: any) {
       console.error('Error creating client:', error);
       const errorMessage = error?.message || error?.error_description || JSON.stringify(error) || 'Unknown error occurred';
-      alert('Failed to create client: ' + errorMessage);
+      showToast('Failed to create client: ' + errorMessage, 'error');
       setLoading(false);
     }
   };

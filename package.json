@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "PORT=3000 next dev -p 3000",
+    "dev:v2": "PORT=3007 next dev -p 3007",
+    "build": "PORT=3000 next build",
+    "build:v2": "PORT=3007 next build",
+    "start": "PORT=3000 next start -p 3000",
+    "start:v2": "PORT=3007 next start -p 3007",
     "lint": "next lint"
   },
   "keywords": [],

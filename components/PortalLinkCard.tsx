@@ -1,13 +1,17 @@
 'use client';
 
+import { useToast } from './Toast';
+
 interface PortalLinkCardProps {
   portalUrl: string;
 }
 
 export default function PortalLinkCard({ portalUrl }: PortalLinkCardProps) {
+  const { showToast } = useToast();
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(portalUrl);
-    alert('Link copied to clipboard!');
+    showToast('Link copied to clipboard!', 'success');
   };
 
   return (
