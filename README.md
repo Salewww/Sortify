@@ -217,6 +217,143 @@ The application uses the following main tables:
 - ✅ All actions are logged in audit trail
 - ✅ Authentication via Supabase Auth
 
+## AI-Powered Features (Future Vision)
+
+Sortify can leverage AI to transform the onboarding experience for both bookkeepers and clients. Here's a roadmap of intelligent features:
+
+### 1. Intelligent Task Generation
+- **Custom Pack Builder** - Describe your client's business in plain English, AI generates a customized task pack
+  - Example: "E-commerce business using Shopify, Stripe, and QuickBooks with 5 employees"
+  - AI creates relevant tasks: Shopify integration, Stripe reconciliation, payroll setup, sales tax configuration
+- **Task Auto-Optimization** - AI analyzes completion patterns across clients to suggest task reordering, combining, or splitting
+- **Missing Task Detection** - AI reviews completed onboardings and suggests tasks that were frequently added manually
+
+### 2. Smart Client Communication
+- **AI Reminder Composer** - Generate personalized reminder emails based on:
+  - Client's industry and communication style
+  - Current blockers and progress
+  - Historical response patterns
+  - Time of day/week with best engagement
+- **Help Request Triage** - When clients click "Need Help", AI:
+  - Analyzes the task and common issues
+  - Suggests solutions or clarifications automatically
+  - Routes complex issues to bookkeeper with context
+  - Learns from bookkeeper responses to improve suggestions
+- **Progress Summaries** - Auto-generate client-facing progress reports with plain-language explanations
+
+### 3. Intelligent Automation & Prediction
+- **Blocker Prediction** - AI predicts which tasks are likely to become blockers based on:
+  - Client type and industry
+  - Task complexity
+  - Historical data from similar clients
+  - Proactively suggests interventions
+- **Completion Time Estimates** - ML model predicts onboarding completion dates based on:
+  - Current progress velocity
+  - Remaining task complexity
+  - Client engagement patterns
+- **Churn Risk Detection** - Identifies clients at risk of abandoning onboarding:
+  - Declining engagement metrics
+  - Increasing time between task completions
+  - Rising help requests
+  - Suggests intervention strategies
+
+### 4. Document Intelligence
+- **Smart Proof Validation** - AI reviews uploaded proof documents:
+  - Verifies screenshots contain expected UI elements
+  - Extracts data to confirm task completion (e.g., "User added with Admin role")
+  - Flags incomplete or incorrect proofs with specific feedback
+  - Learns from bookkeeper approvals/rejections
+- **OCR & Data Extraction** - Extract structured data from uploaded documents:
+  - Company details from registration documents
+  - Account numbers from bank statements
+  - Tax IDs from forms
+  - Auto-populate client records
+
+### 5. Natural Language Interfaces
+- **AI Onboarding Assistant (Client-Facing)** - Chat interface in client portal:
+  - "How do I find my Stripe API keys?" → Step-by-step guidance with screenshots
+  - "I'm stuck on this task" → Contextual troubleshooting
+  - "What's next?" → Explains upcoming tasks and why they matter
+- **Bookkeeper Copilot** - Chat interface in dashboard:
+  - "Show me all blocked e-commerce clients" → Instant filtered view
+  - "Draft reminder for Acme Corp focusing on tax deadline" → Generate custom email
+  - "What's the average onboarding time for retail clients?" → Analytics insights
+
+### 6. Smart Search & Discovery
+- **Semantic Task Search** - Find tasks by describing what you need:
+  - "Two-factor authentication setup" → Returns all 2FA-related tasks across platforms
+  - "Tax compliance for California" → Surfaces relevant state-specific tasks
+- **Knowledge Base Auto-Builder** - AI analyzes completed tasks and builds a searchable knowledge base:
+  - Common troubleshooting steps
+  - Platform-specific gotchas
+  - Best practices learned from successful onboardings
+
+### 7. Workflow Optimization
+- **Task Dependency Detection** - AI identifies implicit dependencies between tasks:
+  - "Stripe integration" should come before "Automated invoicing"
+  - Suggests optimal task ordering
+  - Warns when tasks are marked complete out of sequence
+- **Parallel Task Suggestion** - Identifies tasks clients can work on simultaneously to speed up onboarding
+- **Template Pack Intelligence** - Recommends template pack combinations based on client profile
+
+### 8. Proactive Insights & Analytics
+- **Client Health Score** - AI-powered health metrics combining:
+  - Progress velocity
+  - Help request frequency
+  - Communication responsiveness
+  - Blocker resolution time
+- **Revenue Impact Prediction** - Estimate client lifetime value based on onboarding smoothness:
+  - Smooth onboarding → Higher retention
+  - Early blocker resolution → Better relationship
+- **Capacity Planning** - Predict bookkeeper workload:
+  - "Next week you'll likely have 3 help requests based on current client progress"
+  - Suggest optimal times to onboard new clients
+
+### 9. Continuous Learning System
+- **Feedback Loop** - Every interaction trains the AI:
+  - Bookkeeper edits AI-generated email → Learns writing style
+  - Bookkeeper marks AI suggestion as helpful/unhelpful → Improves recommendations
+  - Client completes task after AI help → Reinforces successful patterns
+- **Industry-Specific Models** - Fine-tuned AI models for different verticals:
+  - E-commerce bookkeeping
+  - Professional services
+  - Non-profits
+  - Each with specialized knowledge and terminology
+
+### 10. Integration Intelligence
+- **OAuth Verification Assistant** - AI guides through OAuth connection flows:
+  - Detects what step client is stuck on
+  - Provides contextual help with actual screenshots from that platform
+  - Verifies connection was successful by checking API responses
+- **API Health Monitoring** - AI monitors connected platform APIs:
+  - Detects when credentials expire or permissions change
+  - Proactively notifies before issues affect bookkeeping
+  - Suggests re-authentication steps
+
+### Implementation Priorities
+
+**Phase 1 (Quick Wins):**
+- AI Reminder Composer
+- Smart Help Request Triage
+- Document OCR & Data Extraction
+
+**Phase 2 (High Impact):**
+- Blocker Prediction
+- Client Health Score
+- Custom Pack Builder
+
+**Phase 3 (Advanced):**
+- Natural Language Interfaces (Copilot)
+- Smart Proof Validation
+- Completion Time Estimates
+
+**Technical Considerations:**
+- Use Claude API for text generation and analysis
+- OpenAI GPT-4 Vision for document/screenshot analysis
+- Fine-tune smaller models for specific predictions (blocker detection, completion time)
+- Vector database (Pinecone/Weaviate) for semantic search
+- Regular human-in-the-loop feedback to improve AI accuracy
+
 ## What's Not Implemented (Future Enhancements)
 
 The MVP focuses on core functionality. These features are planned for future releases:
