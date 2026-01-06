@@ -14,8 +14,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuth = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    // Prevent submission if already loading
+    if (loading) return;
+
     setLoading(true);
     setError(null);
 
@@ -84,6 +88,11 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !loading) {
+                    handleAuth();
+                  }
+                }}
                 required
                 className="input"
                 placeholder="you@example.com"
@@ -99,6 +108,11 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !loading) {
+                    handleAuth();
+                  }
+                }}
                 required
                 minLength={6}
                 className="input"
