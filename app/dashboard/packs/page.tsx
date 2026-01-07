@@ -135,6 +135,89 @@ export default function PacksPage() {
     setAiGeneratedTasks(aiGeneratedTasks.filter((_, i) => i !== index));
   };
 
+  const addManualTask = () => {
+    const newTask: GeneratedTask = {
+      title: '',
+      why: '',
+      instructions: '',
+      platform: 'general',
+      isBlocking: false,
+    };
+    setAiGeneratedTasks([...aiGeneratedTasks, newTask]);
+    if (!showTaskEditor) {
+      setShowTaskEditor(true);
+    }
+  };
+
+  const regenerateSingleTask = async (index: number) => {
+    if (!newPackName.trim()) {
+      showToast('Pack name is required for AI generation', 'error');
+      return;
+    }
+
+    const currentTask = aiGeneratedTasks[index];
+    setGeneratingAI(true);
+
+    try {
+      const response = await fetch('/api/ai/generate-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packName: newPackName,
+          packDescription: `Generate 1 task similar to: ${currentTask.title}. ${newPackDescription}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate task');
+      }
+
+      const { tasks } = await response.json();
+      if (tasks && tasks.length > 0) {
+        const updated = [...aiGeneratedTasks];
+        updated[index] = tasks[0];
+        setAiGeneratedTasks(updated);
+        showToast('Task regenerated successfully!', 'success');
+      }
+    } catch (error: any) {
+      showToast(error.message || 'Failed to regenerate task', 'error');
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  const deletePack = async (packId: string, packName: string) => {
+    if (!confirm(`Are you sure you want to delete "${packName}"? This will also remove all associated tasks.`)) {
+      return;
+    }
+
+    const supabase = createClient();
+
+    try {
+      // Delete pack_tasks first (foreign key relationship)
+      const { error: packTasksError } = await supabase
+        .from('pack_tasks')
+        .delete()
+        .eq('pack_id', packId);
+
+      if (packTasksError) throw packTasksError;
+
+      // Delete the pack
+      const { error: packError } = await supabase
+        .from('packs')
+        .delete()
+        .eq('id', packId);
+
+      if (packError) throw packError;
+
+      showToast('Pack deleted successfully!', 'success');
+      loadPacks();
+    } catch (error: any) {
+      console.error('Error deleting pack:', error);
+      showToast('Failed to delete pack', 'error');
+    }
+  };
+
   const createCustomPack = async () => {
     if (!newPackName.trim()) {
       showToast('Please enter a pack name', 'error');
@@ -220,7 +303,12 @@ export default function PacksPage() {
     setNewPackName('');
     setNewPackDescription('');
     setAiGeneratedTasks([]);
-    loadPacks();
+
+    // Reload packs and select the newly created one
+    await loadPacks();
+    if (pack) {
+      loadPackTasks(pack);
+    }
   };
 
   if (loading) {
@@ -249,25 +337,40 @@ export default function PacksPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Available Packs</h2>
             <div className="space-y-2">
               {packs.map((pack) => (
-                <button
-                  key={pack.id}
-                  onClick={() => loadPackTasks(pack)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                    selectedPack?.id === pack.id
-                      ? 'bg-primary-50 border-2 border-primary-500 text-primary-900'
-                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  <div className="font-medium">{pack.name}</div>
-                  {pack.description && (
-                    <div className="text-sm text-gray-600 mt-1">{pack.description}</div>
+                <div key={pack.id} className="relative group">
+                  <button
+                    onClick={() => loadPackTasks(pack)}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                      selectedPack?.id === pack.id
+                        ? 'bg-primary-50 border-2 border-primary-500 text-primary-900'
+                        : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    <div className="font-medium">{pack.name}</div>
+                    {pack.description && (
+                      <div className="text-sm text-gray-600 mt-1">{pack.description}</div>
+                    )}
+                    {pack.owner_user_id === null && (
+                      <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                        System Template
+                      </span>
+                    )}
+                  </button>
+                  {pack.owner_user_id !== null && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deletePack(pack.id, pack.name);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Delete pack"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   )}
-                  {pack.owner_user_id === null && (
-                    <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                      System Template
-                    </span>
-                  )}
-                </button>
+                </div>
               ))}
             </div>
           </div>
@@ -400,15 +503,23 @@ export default function PacksPage() {
                     <h4 className="text-lg font-semibold text-gray-900">
                       Generated Tasks ({aiGeneratedTasks.length})
                     </h4>
-                    <button
-                      onClick={() => {
-                        setShowTaskEditor(false);
-                        setAiGeneratedTasks([]);
-                      }}
-                      className="text-sm text-gray-600 hover:text-gray-900"
-                    >
-                      Clear & Regenerate
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={addManualTask}
+                        className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      >
+                        + Add Task
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowTaskEditor(false);
+                          setAiGeneratedTasks([]);
+                        }}
+                        className="text-sm text-gray-600 hover:text-gray-900"
+                      >
+                        Clear & Regenerate
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -424,15 +535,27 @@ export default function PacksPage() {
                               placeholder="Task title"
                             />
                           </div>
-                          <button
-                            onClick={() => removeTask(index)}
-                            className="ml-2 text-red-600 hover:text-red-800"
-                            title="Remove task"
-                          >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </button>
+                          <div className="flex gap-1 ml-2">
+                            <button
+                              onClick={() => regenerateSingleTask(index)}
+                              disabled={generatingAI}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                              title="Regenerate this task with AI"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => removeTask(index)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                              title="Remove task"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
 
                         <div className="space-y-2">
