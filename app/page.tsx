@@ -137,6 +137,7 @@ function DashboardMockup() {
 const plans = [
   {
     name: 'Free',
+    planKey: null,
     monthly: 0,
     annual: 0,
     description: 'Try it risk-free',
@@ -147,6 +148,7 @@ const plans = [
   },
   {
     name: 'Solo',
+    planKey: 'solo',
     monthly: 19,
     annual: 15,
     description: 'For independent bookkeepers',
@@ -157,6 +159,7 @@ const plans = [
   },
   {
     name: 'Team',
+    planKey: 'team',
     monthly: 49,
     annual: 39,
     description: 'For small firms',
@@ -167,6 +170,7 @@ const plans = [
   },
   {
     name: 'Firm',
+    planKey: 'firm',
     monthly: 99,
     annual: 79,
     description: 'For growing practices',
@@ -185,6 +189,29 @@ export default function Home() {
   const isV2 = appVersion === 'v2';
   const [annual, setAnnual] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (planKey: string) => {
+    setCheckoutLoading(planKey);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planKey, billing: annual ? 'annual' : 'monthly' }),
+      });
+      if (res.status === 401) {
+        // Not logged in — send to signup first, then we'll redirect back
+        router.push(`/auth/login?mode=signup&redirect=/pricing`);
+        return;
+      }
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch {
+      // silent
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   useEffect(() => {
     if (isV2) {
@@ -553,18 +580,33 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href={plan.name === 'Firm' ? 'mailto:hello@sortify.app' : '/auth/login?mode=signup'}
-                  className={`w-full text-center py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all ${
-                    plan.popular
-                      ? 'bg-white text-indigo-600 hover:bg-indigo-50'
-                      : plan.ghost
-                      ? 'border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+                {plan.planKey === null ? (
+                  <Link
+                    href="/auth/login?mode=signup"
+                    className="w-full text-center py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 block"
+                  >
+                    {plan.cta}
+                  </Link>
+                ) : plan.name === 'Firm' ? (
+                  <a
+                    href="mailto:hello@sortify.app"
+                    className="w-full text-center py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all bg-indigo-600 text-white hover:bg-indigo-700 block"
+                  >
+                    {plan.cta}
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => handleCheckout(plan.planKey!)}
+                    disabled={checkoutLoading === plan.planKey}
+                    className={`w-full py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all disabled:opacity-70 disabled:cursor-wait ${
+                      plan.popular
+                        ? 'bg-white text-indigo-600 hover:bg-indigo-50'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    }`}
+                  >
+                    {checkoutLoading === plan.planKey ? 'Redirecting…' : plan.cta}
+                  </button>
+                )}
               </div>
             ))}
           </div>

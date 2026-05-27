@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getAppVersion } from '@/lib/version';
 
@@ -12,8 +13,11 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const appVersion = getAppVersion();
   const isV2 = appVersion === 'v2';
+  const searchParams = useSearchParams();
+  const upgraded = searchParams.get('upgraded');
 
   useEffect(() => {
     loadUserData();
@@ -198,6 +202,60 @@ export default function SettingsPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Subscription */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {isV2 ? 'Naročnina' : 'Subscription'}
+            </h2>
+            {upgraded && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5 6.5-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                {isV2 ? 'Naročnina aktivirana!' : 'Subscription activated!'}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between py-3 border border-gray-100 rounded-xl px-4 bg-gray-50 mb-4">
+            <div>
+              <div className="text-sm font-medium text-gray-900 capitalize">
+                {profile?.subscription_plan || 'free'} plan
+              </div>
+              <div className="text-xs text-gray-500 mt-0.5 capitalize">
+                {profile?.subscription_status === 'active' ? (isV2 ? 'Aktivna' : 'Active')
+                  : profile?.subscription_status === 'trialing' ? (isV2 ? '14-dnevni preizkus' : '14-day trial')
+                  : profile?.subscription_status === 'past_due' ? (isV2 ? 'Zamuda pri plačilu' : 'Payment past due')
+                  : (isV2 ? 'Neaktivna' : 'Inactive')}
+              </div>
+            </div>
+            {(!profile?.subscription_plan || profile?.subscription_plan === 'free') && (
+              <button
+                onClick={async () => {
+                  setCheckoutLoading('solo');
+                  const res = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: 'solo', billing: 'monthly' }),
+                  });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                  else setCheckoutLoading(null);
+                }}
+                disabled={checkoutLoading === 'solo'}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-70"
+              >
+                {checkoutLoading === 'solo' ? 'Redirecting…' : (isV2 ? 'Nadgradi' : 'Upgrade')}
+              </button>
+            )}
+          </div>
+
+          <p className="text-xs text-gray-400">
+            {isV2
+              ? 'Upravljajte naročnino in plačila na Stripe portalu.'
+              : 'Manage your subscription and billing via the Stripe portal.'}
+          </p>
         </div>
 
         {/* Account Type Switcher (Testing Only) */}
