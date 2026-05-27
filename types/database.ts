@@ -18,6 +18,10 @@ export interface Database {
           account_type: 'firm' | 'solo' | null
           firm_id: string | null
           onboarding_completed: boolean
+          subscription_plan: 'free' | 'solo' | 'team' | 'firm'
+          subscription_status: 'active' | 'inactive' | 'trialing' | 'past_due' | 'canceled'
+          stripe_customer_id: string | null
+          subscription_expires_at: string | null
         }
         Insert: {
           id: string
@@ -27,6 +31,10 @@ export interface Database {
           account_type?: 'firm' | 'solo' | null
           firm_id?: string | null
           onboarding_completed?: boolean
+          subscription_plan?: 'free' | 'solo' | 'team' | 'firm'
+          subscription_status?: 'active' | 'inactive' | 'trialing' | 'past_due' | 'canceled'
+          stripe_customer_id?: string | null
+          subscription_expires_at?: string | null
         }
         Update: {
           id?: string
@@ -36,6 +44,10 @@ export interface Database {
           account_type?: 'firm' | 'solo' | null
           firm_id?: string | null
           onboarding_completed?: boolean
+          subscription_plan?: 'free' | 'solo' | 'team' | 'firm'
+          subscription_status?: 'active' | 'inactive' | 'trialing' | 'past_due' | 'canceled'
+          stripe_customer_id?: string | null
+          subscription_expires_at?: string | null
         }
       }
       firms: {

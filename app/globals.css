@@ -2,51 +2,279 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design tokens ──────────────────────────────────────────────────── */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --color-bg:          #fafafa;
+  --color-surface:     #ffffff;
+  --color-border:      rgba(0, 0, 0, 0.08);
+  --color-border-soft: rgba(0, 0, 0, 0.05);
+
+  --color-primary:     #6366f1;
+  --color-primary-dk:  #4f46e5;
+  --color-primary-lit: #818cf8;
+
+  --color-text:        #111827;
+  --color-text-muted:  #6b7280;
+  --color-text-subtle: #9ca3af;
+
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+
+  --shadow-sm:  0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md:  0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg:  0 4px 12px 0 rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Base reset ─────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
 }
 
+/* ─── Component layer ────────────────────────────────────────────────── */
 @layer components {
+
+  /* Primary button */
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2
+           bg-primary-500 text-white font-medium
+           px-4 py-2 rounded-lg
+           select-none cursor-pointer
+           disabled:opacity-40 disabled:pointer-events-none;
+
+    transition:
+      background-color 150ms var(--ease-out),
+      transform        150ms var(--ease-out),
+      box-shadow       150ms var(--ease-out);
+    box-shadow: 0 1px 2px rgba(99, 102, 241, 0.3),
+                inset 0 1px 0 rgba(255,255,255,0.12);
   }
 
+  @media (hover: hover) {
+    .btn-primary:hover {
+      @apply bg-primary-600;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35),
+                  inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+  }
+
+  .btn-primary:active {
+    @apply bg-primary-700;
+    transform: scale(0.97);
+    box-shadow: 0 1px 2px rgba(99, 102, 241, 0.2);
+  }
+
+  /* Secondary button */
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2
+           bg-white text-gray-700 font-medium
+           px-4 py-2 rounded-lg
+           border border-black/[0.08]
+           select-none cursor-pointer
+           disabled:opacity-40 disabled:pointer-events-none;
+
+    transition:
+      background-color 150ms var(--ease-out),
+      border-color     150ms var(--ease-out),
+      transform        150ms var(--ease-out),
+      box-shadow       150ms var(--ease-out);
+    box-shadow: var(--shadow-sm);
   }
 
-  .input {
-    @apply block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500;
+  @media (hover: hover) {
+    .btn-secondary:hover {
+      @apply bg-gray-50 border-black/[0.12];
+      box-shadow: var(--shadow-md);
+    }
   }
 
+  .btn-secondary:active {
+    @apply bg-gray-100;
+    transform: scale(0.97);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           text-gray-600 font-medium
+           px-3 py-1.5 rounded-md
+           select-none cursor-pointer
+           disabled:opacity-40 disabled:pointer-events-none;
+
+    background: transparent;
+    transition:
+      background-color 150ms var(--ease-out),
+      color            150ms var(--ease-out),
+      transform        150ms var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .btn-ghost:hover {
+      @apply bg-gray-100 text-gray-900;
+    }
+  }
+
+  .btn-ghost:active {
+    @apply bg-gray-200;
+    transform: scale(0.97);
+  }
+
+  /* Card */
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+    @apply bg-white rounded-xl p-6;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    transition:
+      box-shadow 200ms var(--ease-out),
+      border-color 200ms var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .card-interactive:hover {
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: var(--shadow-lg);
+    }
+  }
+
+  /* Input */
+  .input {
+    @apply block w-full rounded-lg bg-white text-gray-900
+           placeholder:text-gray-400
+           border border-black/[0.08]
+           py-2 px-3;
+
+    box-shadow: var(--shadow-sm);
+    transition:
+      border-color 150ms var(--ease-out),
+      box-shadow   150ms var(--ease-out);
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18),
+                var(--shadow-sm);
+  }
+
+  .input:disabled {
+    @apply opacity-50 cursor-not-allowed bg-gray-50;
+  }
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────── */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 @keyframes slide-in-right {
   from {
-    transform: translateX(100%);
     opacity: 0;
+    transform: translateX(100%);
   }
   to {
-    transform: translateX(0);
     opacity: 1;
+    transform: translateX(0);
   }
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
+.animate-toast-in       { animation: toast-in       200ms var(--ease-out) forwards; }
+.animate-toast-out      { animation: toast-out      150ms var(--ease-out) forwards; }
+.animate-fade-in        { animation: fade-in        200ms var(--ease-out) forwards; }
+.animate-slide-up       { animation: slide-up       250ms var(--ease-out) forwards; }
+.animate-slide-in-right { animation: slide-in-right 250ms var(--ease-out); }
+
+/* ─── Reduced motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:   0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration:  0.01ms !important;
+    scroll-behavior:      auto  !important;
+  }
+}
+
+/* ─── Utility overrides ──────────────────────────────────────────────── */
+
+/* Scrollbar – subtle in WebKit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 99px;
+}
+@media (hover: hover) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Focus-visible ring: only keyboard */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
 }
