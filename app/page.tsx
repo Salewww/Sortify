@@ -642,8 +642,8 @@ export default function Home() {
           <div className="flex items-center gap-6 text-sm text-gray-500">
             <a href="#pricing" className="hover:text-gray-300 transition-colors">Pricing</a>
             <Link href="/auth/login" className="hover:text-gray-300 transition-colors">Login</Link>
-            <a href="#" className="hover:text-gray-300 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-gray-300 transition-colors">Terms</a>
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms</Link>
           </div>
           <p className="text-xs text-gray-600">© {new Date().getFullYear()} Sortify. All rights reserved.</p>
         </div>
