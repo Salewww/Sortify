@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getAppVersion } from '@/lib/version';
 
 // Initialize with API key - SDK will use the correct API version automatically
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -22,7 +23,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prompt = `You are an expert bookkeeping consultant helping to create onboarding task checklists for accounting clients.
+    const appVersion = getAppVersion();
+    const isV2 = appVersion === 'v2';
+
+    const prompt = isV2
+      ? `Ste strokovnjak za računovodstvo in svetujete pri ustvarjanju kontrolnih seznamov nalog za uvajanje računovodskih strank.
+
+Ime paketa: ${packName}
+Opis: ${packDescription || 'Ni podano'}
+
+Ustvarite seznam 5-10 nalog za uvajanje za ta paket predlog. Vsaka naloga naj pomaga računovodji pridobiti potreben dostop, podatke ali dokumentacijo od stranke.
+
+Vrnite SAMO veljaven JSON seznam s to natančno strukturo (brez markdown, brez razlage):
+[
+  {
+    "title": "Naslov naloge",
+    "why": "Kratka razlaga, zakaj je ta naloga potrebna (1-2 stavka)",
+    "instructions": "Navodila korak za korakom kot več-vrstični niz z uporabo \\n za prelom vrstice",
+    "platform": "quickbooks|xero|stripe|gusto|bill|shopify|bank|general",
+    "isBlocking": true ali false (true če je kritično za začetek računovodstva)
+  }
+]
+
+Smernice:
+- Osredotočite se na nastavitev dostopa, zbiranje podatkov in deljenje poverilnic
+- Navodila naj bodo jasna in izvedljiva
+- Uporabite ustrezna imena platform (quickbooks, xero, stripe, gusto, bill, shopify, bank, general)
+- Označite resnično kritične naloge kot blokirajoče (isBlocking: true)
+- Navodila naj bodo praktična in specifična
+- POMEMBNO: Vsa besedila (title, why, instructions) morajo biti v slovenščini`
+      : `You are an expert bookkeeping consultant helping to create onboarding task checklists for accounting clients.
 
 Pack Name: ${packName}
 Description: ${packDescription || 'Not provided'}
@@ -48,9 +78,8 @@ Guidelines:
 - Keep instructions practical and specific`;
 
     // Initialize Gemini model
-    // Using gemini-2.5-flash which is available in the API
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash-latest',
     });
 
     // Generate content

@@ -15,17 +15,49 @@ export interface Database {
           email: string
           name: string
           created_at: string
+          account_type: 'firm' | 'solo' | null
+          firm_id: string | null
+          onboarding_completed: boolean
         }
         Insert: {
           id: string
           email: string
           name: string
           created_at?: string
+          account_type?: 'firm' | 'solo' | null
+          firm_id?: string | null
+          onboarding_completed?: boolean
         }
         Update: {
           id?: string
           email?: string
           name?: string
+          created_at?: string
+          account_type?: 'firm' | 'solo' | null
+          firm_id?: string | null
+          onboarding_completed?: boolean
+        }
+      }
+      firms: {
+        Row: {
+          id: string
+          name: string
+          tax_number: string | null
+          address: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          tax_number?: string | null
+          address?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          tax_number?: string | null
+          address?: string | null
           created_at?: string
         }
       }
@@ -39,6 +71,11 @@ export interface Database {
           portal_token: string
           created_at: string
           updated_at: string
+          business_type: 'normiran_sp' | 'sp' | 'doo' | 'other' | null
+          vat_registered: boolean
+          contact_person: string | null
+          contact_email: string | null
+          contact_phone: string | null
         }
         Insert: {
           id?: string
@@ -49,6 +86,11 @@ export interface Database {
           portal_token: string
           created_at?: string
           updated_at?: string
+          business_type?: 'normiran_sp' | 'sp' | 'doo' | 'other' | null
+          vat_registered?: boolean
+          contact_person?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
         }
         Update: {
           id?: string
@@ -59,6 +101,11 @@ export interface Database {
           portal_token?: string
           created_at?: string
           updated_at?: string
+          business_type?: 'normiran_sp' | 'sp' | 'doo' | 'other' | null
+          vat_registered?: boolean
+          contact_person?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
         }
       }
       client_contacts: {
@@ -146,6 +193,10 @@ export interface Database {
           name: string
           description: string | null
           created_at: string
+          is_system: boolean
+          country_code: string
+          tags: string[]
+          business_types: string[]
         }
         Insert: {
           id?: string
@@ -153,6 +204,10 @@ export interface Database {
           name: string
           description?: string | null
           created_at?: string
+          is_system?: boolean
+          country_code?: string
+          tags?: string[]
+          business_types?: string[]
         }
         Update: {
           id?: string
@@ -160,6 +215,10 @@ export interface Database {
           name?: string
           description?: string | null
           created_at?: string
+          is_system?: boolean
+          country_code?: string
+          tags?: string[]
+          business_types?: string[]
         }
       }
       pack_tasks: {

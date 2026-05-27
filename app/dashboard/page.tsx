@@ -1,10 +1,15 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { calculateProgress } from '@/lib/utils';
 import ClientsList from '@/components/ClientsList';
+import { getAppVersion } from '@/lib/version';
+import { sl } from '@/lib/i18n/sl';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
+  const appVersion = getAppVersion();
+  const isV2 = appVersion === 'v2';
 
   const {
     data: { user },
@@ -12,6 +17,20 @@ export default async function DashboardPage() {
 
   if (!user) {
     return null;
+  }
+
+  // For v2.0, check if user has Firm account type
+  if (isV2) {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('account_type')
+      .eq('id', user.id)
+      .single();
+
+    // Only allow Firm accounts to access this page
+    if (userData?.account_type !== 'firm') {
+      redirect('/dashboard/documents');
+    }
   }
 
   // Fetch all clients with their checklists and task instances
@@ -68,11 +87,15 @@ export default async function DashboardPage() {
     <div>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Clients</h1>
-          <p className="text-gray-600 mt-1">Manage access onboarding and recurring checks</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isV2 ? 'Stranke' : 'Clients'}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {isV2 ? 'Upravljajte z dostopom, vnosom in rednimi pregledi' : 'Manage access onboarding and recurring checks'}
+          </p>
         </div>
         <Link href="/dashboard/clients/new" className="btn-primary">
-          + New Client
+          + {isV2 ? 'Nova stranka' : 'New Client'}
         </Link>
       </div>
 

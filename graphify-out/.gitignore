@@ -1,0 +1,5 @@
+cache/
+*.html
+cost.json
+manifest.json
+.graphify_*

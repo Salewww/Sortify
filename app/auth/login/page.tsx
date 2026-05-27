@@ -1,23 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/Toast';
+import { getAppVersion } from '@/lib/version';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const appVersion = getAppVersion();
+  const isV2 = appVersion === 'v2';
+
+  useEffect(() => {
+    const urlMode = searchParams.get('mode');
+    if (urlMode === 'signup') {
+      setMode('signup');
+    }
+  }, [searchParams]);
 
   const handleAuth = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    // Prevent submission if already loading
     if (loading) return;
 
     setLoading(true);
@@ -32,7 +42,7 @@ export default function LoginPage() {
           password,
           options: {
             data: {
-              name: email.split('@')[0], // Default name from email
+              name: email.split('@')[0],
             },
           },
         });
@@ -40,14 +50,16 @@ export default function LoginPage() {
         if (error) throw error;
 
         if (data.user) {
-          // Create user profile
           await supabase.from('users').insert({
             id: data.user.id,
             email: data.user.email!,
             name: email.split('@')[0],
           });
 
-          showToast('Account created! Please check your email to verify.', 'success');
+          showToast(
+            isV2 ? 'Račun ustvarjen! Preverite e-pošto za potrditev.' : 'Account created! Please check your email to verify.',
+            'success'
+          );
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -74,14 +86,17 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Sortify</h1>
             <p className="text-gray-600">
-              {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
+              {mode === 'login'
+                ? (isV2 ? 'Prijavite se v svoj račun' : 'Sign in to your account')
+                : (isV2 ? 'Ustvarite svoj račun' : 'Create your account')
+              }
             </p>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+                {isV2 ? 'E-pošta' : 'Email'}
               </label>
               <input
                 id="email"
@@ -95,13 +110,13 @@ export default function LoginPage() {
                 }}
                 required
                 className="input"
-                placeholder="you@example.com"
+                placeholder={isV2 ? 'vas@primer.si' : 'you@example.com'}
               />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+                {isV2 ? 'Geslo' : 'Password'}
               </label>
               <input
                 id="password"
@@ -131,7 +146,12 @@ export default function LoginPage() {
               disabled={loading}
               className="btn-primary w-full"
             >
-              {loading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Sign Up'}
+              {loading
+                ? (isV2 ? 'Nalaganje...' : 'Loading...')
+                : mode === 'login'
+                  ? (isV2 ? 'Prijava' : 'Sign In')
+                  : (isV2 ? 'Registracija' : 'Sign Up')
+              }
             </button>
           </form>
 
@@ -141,11 +161,26 @@ export default function LoginPage() {
               onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
               className="text-primary-600 hover:text-primary-700 text-sm font-medium"
             >
-              {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              {mode === 'login'
+                ? (isV2 ? 'Nimate računa? Registrirajte se' : "Don't have an account? Sign up")
+                : (isV2 ? 'Že imate račun? Prijavite se' : 'Already have an account? Sign in')
+              }
             </button>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

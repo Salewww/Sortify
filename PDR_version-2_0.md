@@ -852,8 +852,292 @@ Key KPIs:
 ### Solo MVP Done When:
 - Solo user sees SI normiran pack assigned automatically
 - Solo user can upload invoices/receipts and search them
-- Solo user can ask AI “What do I do next?” and get relevant answer
+- Solo user can ask AI "What do I do next?" and get relevant answer
 - Annual reminders exist as tasks or scheduled reminders
+
+---
+
+## 17.5) AI Support Copilot (v2.0 Feature)
+
+**Status:** ✅ Implemented
+
+### Scope
+The AI Support Copilot is a pre-ticket deflection system that helps users resolve issues before submitting support tickets. It's exclusive to v2.0 (Slovenian localization) and integrated into the Help ("Pomoč") modal.
+
+### Primary Goals
+1. **Deflect Support Tickets**: Resolve 30-50% of support requests without human intervention
+2. **Improve Ticket Quality**: Pre-fill high-quality tickets with structured information when deflection fails
+3. **Reduce Time-to-Resolution**: Provide instant, actionable guidance
+4. **Gather Intelligence**: Log classification and confidence data for product improvement
+
+### User Flow
+
+**Entry Point:**
+- Help page ("Pomoč in podpora") → "Nova zahteva za pomoč" button
+- User fills "Naslov" (title) and "Opis" (description) fields
+
+**AI Copilot Activation:**
+1. User clicks "✨ Poskusi AI Support Copilot (SLO)" button
+2. System sends user message + context to `/api/ai/support-copilot`
+3. AI analyzes the issue and returns structured response
+
+**Response Display:**
+- **If Resolvable:**
+  - Shows summary + step-by-step instructions
+  - Verification steps ("Preveri, ali...")
+  - Optional: Clarifying questions
+  - Two buttons:
+    - "✓ To mi je pomagalo" (This helped me) → Dismisses modal, logs deflection
+    - "Še vedno potrebujem pomoč" (Still need help) → Returns to ticket form
+
+- **If Not Resolvable:**
+  - Auto-fills ticket draft with:
+    - Improved title
+    - Structured description (reproduction steps, environment, expected vs actual)
+    - Suggested priority (low/medium/high/urgent)
+  - User reviews and submits ticket normally
+
+**Safety Guardrails:**
+- Detects sensitive data (API keys, passwords, credentials)
+- Shows warning if detected: "⚠️ Opozorilo: Never share API keys..."
+- Logs security event for review
+
+### Technical Implementation
+
+**API Endpoint:** `POST /api/ai/support-copilot`
+
+**Input:**
+```json
+{
+  "userMessage": "string (combined title + description)",
+  "uiContext": "support_modal",
+  "userPlan": "free|starter|pro|agency|null",
+  "appVersion": "v2",
+  "locale": "sl-SI",
+  "lastErrorCode": "string|null",
+  "lastRequestId": "string|null",
+  "lastRoute": "string|null",
+  "browserInfo": "string|null"
+}
+```
+
+**Output Schema:**
+```json
+{
+  "language": "sl",
+  "canResolveWithoutTicket": boolean,
+  "answer": {
+    "summary": "string",
+    "steps": ["string"],
+    "verification": ["string"],
+    "fallback": ["string"]
+  },
+  "classification": {
+    "category": "bug|how_to|billing|feature_request|account_access|performance|ai_generation|other",
+    "platform": "quickbooks|xero|stripe|bank|general|unknown",
+    "prioritySuggested": "low|medium|high|urgent",
+    "confidence": 0.0-1.0,
+    "tags": ["string"]
+  },
+  "clarifyingQuestions": ["string"],
+  "ticketDraft": {
+    "title": "string",
+    "description": "string",
+    "priority": "low|medium|high|urgent",
+    "additionalDataRequested": ["string"]
+  },
+  "safety": {
+    "sensitiveDataDetected": boolean,
+    "warnings": ["string"]
+  }
+}
+```
+
+**AI Model:** Google Gemini 1.5 Flash (via `@google/generative-ai`)
+
+**System Prompt Guidelines:**
+- Always respond in Slovenian
+- Prioritize lowest-friction solutions
+- Never fabricate system data
+- Max 3 clarifying questions at once
+- Include verification steps for all solutions
+- Detect and warn about sensitive data exposure
+- Provide fallback steps if primary solution doesn't work
+
+**Analytics Logging:**
+All interactions logged to `ai_logs` table:
+```sql
+{
+  user_id: uuid,
+  operation_type: 'support_copilot',
+  input_data: {
+    userMessage,
+    uiContext,
+    userPlan,
+    appVersion
+  },
+  output_data: {
+    category,
+    confidence,
+    canResolve
+  },
+  success: boolean,
+  created_at: timestamp
+}
+```
+
+### Category Classifications
+
+**Bug:**
+- Error messages, crashes, data inconsistencies
+- UI glitches, broken features
+- Examples: "Error creating pack", "Page not loading", "Data not saving"
+
+**How-to:**
+- User doesn't know how to use a feature
+- Examples: "How do I add tasks?", "Where is the export button?"
+
+**Billing:**
+- Payment issues, subscription changes, invoicing
+- Examples: "Can't upgrade plan", "Need invoice copy"
+
+**Feature Request:**
+- User wants new functionality or enhancements
+- Examples: "Add bulk upload", "Support for Croatian language"
+
+**Account/Access:**
+- Login issues, permissions, authentication
+- Examples: "Can't log in", "Need to change email", "Lost access"
+
+**Performance:**
+- Slow loading, timeouts, lag
+- Examples: "Dashboard takes forever to load", "Documents upload slow"
+
+**AI Generation:**
+- Issues with AI features (pack generation, reminders, OCR)
+- Examples: "AI didn't generate tasks", "Reminder draft is empty"
+
+**Other:**
+- Fallback for unclassifiable requests
+
+### Platform Detection
+Detects mentioned platforms and tags appropriately:
+- `eDavki`, `AJPES`, `FURS`, `Banka Slovenije` → `bank`
+- `QuickBooks`, `QBO` → `quickbooks`
+- `Xero` → `xero`
+- `Stripe` → `stripe`
+- Generic/unclear → `general`
+
+### Limitations
+
+**Functional:**
+- Cannot access user's database or real-time system state
+- Cannot execute actions (only provide guidance)
+- Cannot see screenshots or files (text-only input)
+- Cannot escalate automatically (user must submit ticket)
+
+**Scope:**
+- v2.0 only (Slovenian locale)
+- Support modal only (not available in other contexts)
+- Requires `GEMINI_API_KEY` environment variable
+- Subject to Gemini API rate limits and quotas
+
+**Accuracy:**
+- Best-effort suggestions based on limited context
+- Cannot guarantee solution accuracy for all edge cases
+- Verification steps required to confirm fixes
+- Fallback to human support always available
+
+### Success Metrics
+
+**Primary KPIs:**
+- **Deflection Rate**: % of users clicking "To mi je pomagalo" vs submitting ticket
+- **Target**: 30-50% deflection rate
+
+**Secondary KPIs:**
+- **Average Confidence Score**: Track AI classification confidence over time
+- **Category Distribution**: Identify common issue types for product improvement
+- **Safety Trigger Rate**: Track sensitive data detection frequency
+
+**Analytics Queries:**
+```sql
+-- Deflection rate (proxy: no ticket created within 10 minutes)
+SELECT
+  COUNT(CASE WHEN canResolve THEN 1 END) as deflectable,
+  COUNT(*) as total,
+  (COUNT(CASE WHEN canResolve THEN 1 END)::float / COUNT(*)) as deflection_rate
+FROM ai_logs
+WHERE operation_type = 'support_copilot'
+AND created_at > NOW() - INTERVAL '30 days';
+
+-- Category distribution
+SELECT
+  output_data->>'category' as category,
+  COUNT(*) as count,
+  AVG((output_data->>'confidence')::float) as avg_confidence
+FROM ai_logs
+WHERE operation_type = 'support_copilot'
+GROUP BY category
+ORDER BY count DESC;
+
+-- Safety events
+SELECT COUNT(*)
+FROM ai_logs
+WHERE operation_type = 'support_copilot'
+AND (output_data->'safety'->>'sensitiveDataDetected')::boolean = true;
+```
+
+### Future Enhancements
+
+**v2.1:**
+- Multi-turn conversation support (follow-up questions)
+- Screenshot analysis integration (GPT-4 Vision)
+- Context enrichment (pull user's recent errors from logs)
+
+**v2.2:**
+- Automated ticket triage for firm admins
+- AI-suggested help article creation from common issues
+- Proactive issue detection (flag potential problems before user reports)
+
+**v2.3:**
+- Multi-language support (Croatian, Serbian)
+- Voice input via speech-to-text
+- Integration with knowledge base (RAG)
+
+### Configuration Requirements
+
+**Environment Variables:**
+```env
+# Required for AI Support Copilot
+GEMINI_API_KEY=your_google_ai_studio_key
+```
+
+**Optional Feature Flags:**
+```env
+# Disable AI Copilot (fallback to standard ticket form)
+NEXT_PUBLIC_DISABLE_AI_COPILOT=false
+
+# Adjust confidence threshold for auto-deflection
+AI_COPILOT_CONFIDENCE_THRESHOLD=0.7
+```
+
+**Database Schema:**
+No additional tables required. Uses existing:
+- `help_requests` (for submitted tickets)
+- `ai_logs` (for analytics)
+
+### Acceptance Criteria
+
+**AI Support Copilot v2.0 Done When:**
+- ✅ User can click "Poskusi AI Support Copilot" button in Help modal
+- ✅ AI analyzes issue and returns Slovenian response with steps
+- ✅ User can dismiss with "To mi je pomagalo" (deflection)
+- ✅ User can continue to ticket with pre-filled draft
+- ✅ Sensitive data detection works and shows warnings
+- ✅ All interactions logged to `ai_logs` table
+- ✅ Classification includes category, platform, confidence
+- ✅ README documentation complete
+- ✅ PRD section added with scope, flow, limitations
 
 ---
 

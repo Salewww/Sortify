@@ -1,0 +1,9 @@
+graphify-out/
+.claude/
+*.local
+node_modules/
+.next/
+V2_SETUP_INSTRUCTIONS.md
+V2_IMPLEMENTATION_SUMMARY.md
+AI_SETUP_INSTRUCTIONS.md
+AUTO_DEPLOY_FINAL.ts

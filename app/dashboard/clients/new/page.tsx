@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { generatePortalToken } from '@/lib/utils';
 import { useToast } from '@/components/Toast';
+import { getAppVersion } from '@/lib/version';
+import { sl } from '@/lib/i18n/sl';
 
 interface Pack {
   id: string;
@@ -32,6 +34,10 @@ export default function NewClientPage() {
   const [recurringCheck, setRecurringCheck] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<'monthly' | 'quarterly'>('monthly');
 
+  const appVersion = getAppVersion();
+  const isV2 = appVersion === 'v2';
+  const t = isV2 ? sl.clients : null;
+
   useEffect(() => {
     async function loadPacks() {
       const supabase = createClient();
@@ -42,7 +48,10 @@ export default function NewClientPage() {
 
       if (error) {
         console.error('Error loading packs:', error);
-        showToast('Failed to load template packs. Please ensure the database is set up correctly.', 'error');
+        const errorMsg = isV2
+          ? 'Napaka pri nalaganju paketov predlog'
+          : 'Failed to load template packs. Please ensure the database is set up correctly.';
+        showToast(errorMsg, 'error');
         return;
       }
 
@@ -51,12 +60,15 @@ export default function NewClientPage() {
         if (data.length > 0) {
           setSelectedPackId(data[0].id);
         } else {
-          alert('No template packs found. Please run the database seed migration first.');
+          const msg = isV2
+            ? 'Ni najdenih paketov predlog. Zaženite migracijo podatkovne baze.'
+            : 'No template packs found. Please run the database seed migration first.';
+          alert(msg);
         }
       }
     }
     loadPacks();
-  }, []);
+  }, [isV2]);
 
   const addContact = () => {
     setContacts([...contacts, { name: '', email: '', is_primary: false }]);
@@ -79,12 +91,14 @@ export default function NewClientPage() {
 
     // Validation
     if (!selectedPackId) {
-      alert('Please select a template pack');
+      const msg = isV2 ? 'Izberite paket predlog' : 'Please select a template pack';
+      alert(msg);
       return;
     }
 
     if (contacts.some(c => !c.name || !c.email)) {
-      alert('Please fill in all contact details');
+      const msg = isV2 ? 'Izpolnite vse podatke za kontakte' : 'Please fill in all contact details';
+      alert(msg);
       return;
     }
 
@@ -128,12 +142,13 @@ export default function NewClientPage() {
       if (contactsError) throw contactsError;
 
       // Create onboarding checklist
+      const runLabel = isV2 ? 'Začetno uvajanje' : 'Initial Onboarding';
       const { data: checklist, error: checklistError } = await supabase
         .from('client_checklists')
         .insert({
           client_id: client.id,
           type: 'onboarding',
-          run_label: 'Initial Onboarding',
+          run_label: runLabel,
         })
         .select()
         .single();
@@ -209,26 +224,34 @@ export default function NewClientPage() {
       });
 
       // Show success message and redirect
-      showToast(`Client "${clientName}" created successfully!`, 'success');
+      const successMsg = isV2
+        ? `Stranka "${clientName}" uspešno ustvarjena!`
+        : `Client "${clientName}" created successfully!`;
+      showToast(successMsg, 'success');
       router.push(`/dashboard/clients/${client.id}`);
     } catch (error: any) {
       console.error('Error creating client:', error);
       const errorMessage = error?.message || error?.error_description || JSON.stringify(error) || 'Unknown error occurred';
-      showToast('Failed to create client: ' + errorMessage, 'error');
+      const errorMsg = isV2
+        ? 'Napaka pri ustvarjanju stranke: ' + errorMessage
+        : 'Failed to create client: ' + errorMessage;
+      showToast(errorMsg, 'error');
       setLoading(false);
     }
   };
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Client</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        {isV2 ? t!.createNew : 'Create New Client'}
+      </h1>
 
       <form onSubmit={handleSubmit} className="max-w-3xl">
         <div className="card space-y-6">
           {/* Client Name */}
           <div>
             <label htmlFor="clientName" className="block text-sm font-medium text-gray-700 mb-2">
-              Client Name *
+              {isV2 ? `${t!.clientName} *` : 'Client Name *'}
             </label>
             <input
               id="clientName"
@@ -237,14 +260,14 @@ export default function NewClientPage() {
               onChange={(e) => setClientName(e.target.value)}
               required
               className="input"
-              placeholder="Acme Corporation"
+              placeholder={isV2 ? t!.clientNamePlaceholder : 'Acme Corporation'}
             />
           </div>
 
           {/* Notes */}
           <div>
             <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-              Notes (Optional)
+              {isV2 ? t!.notes : 'Notes (Optional)'}
             </label>
             <textarea
               id="notes"
@@ -252,14 +275,14 @@ export default function NewClientPage() {
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               className="input"
-              placeholder="Add any internal notes about this client..."
+              placeholder={isV2 ? t!.notesPlaceholder : 'Add any internal notes about this client...'}
             />
           </div>
 
           {/* Select Pack */}
           <div>
             <label htmlFor="pack" className="block text-sm font-medium text-gray-700 mb-2">
-              Template Pack *
+              {isV2 ? `${t!.templatePack} *` : 'Template Pack *'}
             </label>
             <select
               id="pack"
@@ -284,7 +307,7 @@ export default function NewClientPage() {
           {/* Contacts */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Client Contacts *
+              {isV2 ? `${t!.clientContacts} *` : 'Client Contacts *'}
             </label>
             <div className="space-y-3">
               {contacts.map((contact, index) => (
@@ -293,7 +316,7 @@ export default function NewClientPage() {
                     type="text"
                     value={contact.name}
                     onChange={(e) => updateContact(index, 'name', e.target.value)}
-                    placeholder="Contact Name"
+                    placeholder={isV2 ? t!.contactName : 'Contact Name'}
                     required
                     className="input flex-1"
                   />
@@ -301,7 +324,7 @@ export default function NewClientPage() {
                     type="email"
                     value={contact.email}
                     onChange={(e) => updateContact(index, 'email', e.target.value)}
-                    placeholder="email@example.com"
+                    placeholder={isV2 ? t!.emailPlaceholder : 'email@example.com'}
                     required
                     className="input flex-1"
                   />
@@ -312,7 +335,7 @@ export default function NewClientPage() {
                       onChange={(e) => updateContact(index, 'is_primary', e.target.checked)}
                       className="rounded border-gray-300"
                     />
-                    Primary
+                    {isV2 ? t!.primary : 'Primary'}
                   </label>
                   {contacts.length > 1 && (
                     <button
@@ -320,7 +343,7 @@ export default function NewClientPage() {
                       onClick={() => removeContact(index)}
                       className="text-red-600 hover:text-red-700 text-sm font-medium"
                     >
-                      Remove
+                      {isV2 ? t!.remove : 'Remove'}
                     </button>
                   )}
                 </div>
@@ -331,7 +354,7 @@ export default function NewClientPage() {
               onClick={addContact}
               className="mt-3 text-primary-600 hover:text-primary-700 text-sm font-medium"
             >
-              + Add Another Contact
+              {isV2 ? t!.addAnotherContact : '+ Add Another Contact'}
             </button>
           </div>
 
@@ -345,7 +368,7 @@ export default function NewClientPage() {
                 className="rounded border-gray-300"
               />
               <span className="text-sm font-medium text-gray-700">
-                Enable Recurring Access Checks
+                {isV2 ? t!.enableRecurringChecks : 'Enable Recurring Access Checks'}
               </span>
             </label>
             {recurringCheck && (
@@ -355,8 +378,8 @@ export default function NewClientPage() {
                   onChange={(e) => setRecurringFrequency(e.target.value as 'monthly' | 'quarterly')}
                   className="input max-w-xs"
                 >
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
+                  <option value="monthly">{isV2 ? t!.frequency.monthly : 'Monthly'}</option>
+                  <option value="quarterly">{isV2 ? t!.frequency.quarterly : 'Quarterly'}</option>
                 </select>
               </div>
             )}
@@ -370,14 +393,17 @@ export default function NewClientPage() {
             disabled={loading}
             className="btn-primary"
           >
-            {loading ? 'Creating...' : 'Create Client'}
+            {loading
+              ? (isV2 ? t!.creating : 'Creating...')
+              : (isV2 ? t!.createClient : 'Create Client')
+            }
           </button>
           <button
             type="button"
             onClick={() => router.back()}
             className="btn-secondary"
           >
-            Cancel
+            {isV2 ? t!.cancel : 'Cancel'}
           </button>
         </div>
       </form>

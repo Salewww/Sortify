@@ -355,6 +355,171 @@ Sortify can leverage AI to transform the onboarding experience for both bookkeep
 - Vector database (Pinecone/Weaviate) for semantic search
 - Regular human-in-the-loop feedback to improve AI accuracy
 
+## AI Support Copilot (SLO)
+
+**Status:** ✅ Implemented (v2.0 only)
+
+The AI Support Copilot is an intelligent support assistant that helps users resolve issues quickly before submitting support tickets. It's designed specifically for Slovenian (SLO) users in v2.0.
+
+### What It Does
+
+- **Pre-Ticket Deflection**: Attempts to solve user problems immediately with actionable steps and verification
+- **Smart Ticket Drafting**: If the issue can't be resolved, auto-generates a well-structured support ticket with title, description, and priority
+- **Intelligent Classification**: Categorizes issues (Bug, How-to, Billing, Feature request, etc.) with confidence scoring
+- **Safety Guardrails**: Detects and warns about sensitive data (API keys, passwords) and provides security guidance
+- **Analytics Logging**: Tracks classification data and confidence for continuous improvement
+
+### How It Works
+
+1. User fills out "Naslov" and "Opis" in the Help ("Pomoč") modal
+2. User clicks "✨ Poskusi AI Support Copilot (SLO)"
+3. AI analyzes the issue and provides:
+   - **Summary** of the problem
+   - **Step-by-step resolution** instructions
+   - **Verification steps** to confirm the fix
+   - **Clarifying questions** if more info is needed
+   - **Safety warnings** if sensitive data detected
+4. If resolved: User clicks "To mi je pomagalo" (This helped me) - ticket avoided!
+5. If not resolved: AI pre-fills a high-quality ticket draft - user can review and submit
+
+### API Endpoint
+
+**POST** `/api/ai/support-copilot`
+
+**Request Body:**
+```json
+{
+  "userMessage": "string (combined title + description)",
+  "uiContext": "support_modal",
+  "userPlan": "string | null",
+  "appVersion": "string | null",
+  "locale": "sl-SI",
+  "lastErrorCode": "string | null",
+  "lastRequestId": "string | null",
+  "lastRoute": "string | null",
+  "browserInfo": "string | null"
+}
+```
+
+**Response Schema:**
+```json
+{
+  "language": "sl",
+  "canResolveWithoutTicket": boolean,
+  "answer": {
+    "summary": "string",
+    "steps": ["string"],
+    "verification": ["string"],
+    "fallback": ["string"]
+  },
+  "classification": {
+    "category": "bug|how_to|billing|feature_request|account_access|performance|ai_generation|other",
+    "platform": "quickbooks|xero|stripe|bank|general|unknown",
+    "prioritySuggested": "low|medium|high|urgent",
+    "confidence": 0.0-1.0,
+    "tags": ["string"]
+  },
+  "clarifyingQuestions": ["string"],
+  "ticketDraft": {
+    "title": "string",
+    "description": "string",
+    "priority": "low|medium|high|urgent",
+    "additionalDataRequested": ["string"]
+  },
+  "safety": {
+    "sensitiveDataDetected": boolean,
+    "warnings": ["string"]
+  }
+}
+```
+
+### Configuration
+
+**Required Environment Variable:**
+
+```env
+# Google Gemini AI (AI Studio)
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+**How to get Gemini API Key:**
+
+1. Go to [ai.google.dev](https://ai.google.dev)
+2. Click "Get API Key" in Google AI Studio
+3. Create a new API key or use an existing one
+4. Copy the key and add it to `.env.local`
+5. Restart your development server
+
+### User Flow
+
+```mermaid
+graph TD
+    A[User opens Help modal] --> B[Fills title + description]
+    B --> C[Clicks AI Support Copilot]
+    C --> D{AI can resolve?}
+    D -->|Yes| E[Shows solution steps]
+    E --> F{Did it help?}
+    F -->|Yes| G[User clicks 'To mi je pomagalo']
+    G --> H[Ticket deflected ✓]
+    F -->|No| I[User continues to submit]
+    D -->|No| J[AI pre-fills ticket draft]
+    J --> I
+    I --> K[User submits support ticket]
+```
+
+### Analytics & Logging
+
+All AI interactions are logged in the `ai_logs` table for:
+- Category distribution analysis
+- Confidence tracking
+- Deflection rate measurement
+- User satisfaction metrics
+
+**Log Structure:**
+```sql
+SELECT
+  operation_type,
+  input_data->>'userMessage' as message,
+  output_data->>'category' as category,
+  output_data->>'confidence' as confidence,
+  output_data->>'canResolve' as resolved_without_ticket,
+  created_at
+FROM ai_logs
+WHERE operation_type = 'support_copilot';
+```
+
+### Limitations
+
+- **Language**: Slovenian only (locale: sl-SI)
+- **Version**: v2.0 only (not available in v1.0)
+- **Context**: Limited to information provided in user message + basic diagnostics
+- **Accuracy**: AI suggestions are best-effort; always verify critical operations
+- **Rate Limits**: Subject to Gemini API quotas (check Google AI Studio dashboard)
+
+### Best Practices for Users
+
+1. **Be specific**: Include error codes, steps taken, and expected vs actual behavior
+2. **Don't share secrets**: Never paste API keys, passwords, or tokens
+3. **Follow steps exactly**: AI-generated steps are tested but context-specific
+4. **Provide feedback**: Click "To mi je pomagalo" to improve AI accuracy
+
+### Troubleshooting
+
+**AI not responding:**
+- Check `GEMINI_API_KEY` is set correctly
+- Verify API key has quota remaining in Google AI Studio
+- Check browser console for errors
+
+**Poor suggestions:**
+- Provide more context in description
+- Include error messages verbatim
+- Mention what you've already tried
+
+**Security warnings:**
+- Rotate any API keys you accidentally shared
+- Update passwords if mentioned in ticket
+- Contact support directly for account issues
+
 ## What's Not Implemented (Future Enhancements)
 
 The MVP focuses on core functionality. These features are planned for future releases:

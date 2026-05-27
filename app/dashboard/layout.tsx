@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { getAppVersion } from '@/lib/version';
+import { sl } from '@/lib/i18n/sl';
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +25,26 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single();
 
+  // v2.0: Check if user needs to complete onboarding
+  const appVersion = getAppVersion();
+  if (appVersion === 'v2' && profile && !profile.onboarding_completed) {
+    redirect('/onboarding/account-type');
+  }
+
+  const isV2 = appVersion === 'v2';
+  const isFirm = profile?.account_type === 'firm';
+  const isSolo = profile?.account_type === 'solo';
+
+  const nav = isV2 ? sl.nav : {
+    dashboard: 'Clients',
+    templates: 'Templates',
+    settings: 'Settings',
+    logout: 'Sign Out',
+    clients: 'Clients',
+    documents: 'Documents',
+    help: 'Help',
+  };
+
   const handleSignOut = async () => {
     'use server';
     const supabase = await createClient();
@@ -40,31 +62,102 @@ export default async function DashboardLayout({
                 Sortify
               </Link>
               <div className="ml-10 flex items-baseline space-x-4">
-                <Link
-                  href="/dashboard"
-                  className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Clients
-                </Link>
-                <Link
-                  href="/dashboard/packs"
-                  className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Templates
-                </Link>
-                <Link
-                  href="/dashboard/settings"
-                  className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Settings
-                </Link>
+                {/* Firm navigation */}
+                {isV2 && isFirm && (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.clients}
+                    </Link>
+                    <Link
+                      href="/dashboard/documents"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.documents}
+                    </Link>
+                    <Link
+                      href="/dashboard/packs"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.templates}
+                    </Link>
+                    <Link
+                      href="/dashboard/help"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.help}
+                    </Link>
+                    <Link
+                      href="/dashboard/settings"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.settings}
+                    </Link>
+                  </>
+                )}
+
+                {/* Solo navigation */}
+                {isV2 && isSolo && (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.dashboard}
+                    </Link>
+                    <Link
+                      href="/dashboard/documents"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.documents}
+                    </Link>
+                    <Link
+                      href="/dashboard/tasks"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.tasks}
+                    </Link>
+                    <Link
+                      href="/dashboard/settings"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.settings}
+                    </Link>
+                  </>
+                )}
+
+                {/* v1.0 navigation */}
+                {!isV2 && (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.dashboard}
+                    </Link>
+                    <Link
+                      href="/dashboard/packs"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.templates}
+                    </Link>
+                    <Link
+                      href="/dashboard/settings"
+                      className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      {nav.settings}
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">{profile?.name || user.email}</span>
               <form action={handleSignOut}>
                 <button type="submit" className="btn-secondary text-sm">
-                  Sign Out
+                  {nav.logout}
                 </button>
               </form>
             </div>
