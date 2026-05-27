@@ -259,7 +259,7 @@ export default function Home() {
               href="/auth/login?mode=signup"
               className="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] transition-all px-4 py-2 rounded-lg shadow-sm"
             >
-              Get started free
+              Start free trial
             </Link>
           </div>
         </div>
@@ -301,7 +301,7 @@ export default function Home() {
                 href="/auth/login?mode=signup"
                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.97] transition-all text-white font-semibold px-6 py-3 rounded-xl shadow-lg shadow-indigo-900/40 text-[15px]"
               >
-                Start free — no credit card
+                Start 14-day free trial
                 <IconArrowRight />
               </Link>
               <Link
@@ -536,20 +536,14 @@ export default function Home() {
                   <p className={`text-sm ${plan.popular ? 'text-indigo-200' : 'text-gray-500'}`}>{plan.description}</p>
                 </div>
                 <div className="mb-6">
-                  {plan.monthly === 0 ? (
-                    <div className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-gray-900'}`}>Free</div>
-                  ) : (
-                    <>
-                      <div className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
-                        ${annual ? plan.annual : plan.monthly}
-                        <span className={`text-base font-normal ml-1 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>/mo</span>
-                      </div>
-                      {annual && (
-                        <div className={`text-xs mt-1 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>
-                          Billed ${(plan as any).annualTotal ?? plan.annual * 12}/year
-                        </div>
-                      )}
-                    </>
+                  <div className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
+                    ${annual ? plan.annual : plan.monthly}
+                    <span className={`text-base font-normal ml-1 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>/mo</span>
+                  </div>
+                  {annual && (
+                    <div className={`text-xs mt-1 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>
+                      Billed ${(plan as any).annualTotal ?? plan.annual * 12}/year
+                    </div>
                   )}
                 </div>
                 <ul className="space-y-2.5 mb-8 flex-1">
@@ -562,14 +556,7 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                {plan.planKey === null ? (
-                  <Link
-                    href="/auth/login?mode=signup"
-                    className="w-full text-center py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 block"
-                  >
-                    {plan.cta}
-                  </Link>
-                ) : plan.name === 'Firm' ? (
+                {plan.name === 'Firm' ? (
                   <a
                     href="mailto:hello@sortify.app"
                     className="w-full text-center py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all bg-indigo-600 text-white hover:bg-indigo-700 block"
@@ -588,6 +575,11 @@ export default function Home() {
                   >
                     {checkoutLoading === plan.planKey ? 'Redirecting…' : plan.cta}
                   </button>
+                )}
+                {plan.name !== 'Firm' && (
+                  <p className={`text-center text-xs mt-2 ${plan.popular ? 'text-indigo-300' : 'text-gray-400'}`}>
+                    14-day free trial · No credit card
+                  </p>
                 )}
               </div>
             ))}

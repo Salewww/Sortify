@@ -12,16 +12,47 @@ const geist = Geist({
 
 export const metadata: Metadata = {
   title: {
-    default: "Sortify — Client Access Management",
+    default: "Sortify — Stop chasing clients for documents",
     template: "%s · Sortify",
   },
   description:
-    "The streamlined way to collect client access, track onboarding progress, and send smart reminders — built for modern accounting firms.",
+    "Send one link, your client uploads everything. No chasing emails, no missed documents. Client onboarding built for bookkeepers and accountants. From $14/mo.",
   metadataBase: new URL("https://sortify.app"),
+  keywords: [
+    "client onboarding software accountants",
+    "document collection bookkeepers",
+    "client portal accounting",
+    "bookkeeper client management",
+    "accounting client intake software",
+  ],
   openGraph: {
     type: "website",
     locale: "en_US",
     siteName: "Sortify",
+    title: "Sortify — Stop chasing clients for documents",
+    description:
+      "Send one link, your client uploads everything. Client onboarding built for bookkeepers — from $14/mo with a 14-day free trial.",
+    url: "https://sortify.app",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Sortify — Client onboarding for bookkeepers",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sortify — Stop chasing clients for documents",
+    description:
+      "Send one link, your client uploads everything. Built for bookkeepers. From $14/mo.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
   },
 };
 
