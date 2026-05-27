@@ -488,105 +488,137 @@ export default function Home() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" className="py-24 md:py-32">
-        <div className="max-w-6xl mx-auto px-6">
+      <section id="pricing" className="py-24 md:py-32 bg-gray-50/60">
+        <div className="max-w-5xl mx-auto px-6">
+
+          {/* Header */}
           <div className="text-center mb-12">
             <p className="text-indigo-600 text-sm font-semibold uppercase tracking-widest mb-3">Pricing</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">
               Simple. No surprises.
             </h2>
-            <p className="text-gray-500 text-lg mb-2">From <strong className="text-gray-900">$14/mo</strong> billed annually. Every plan includes a <strong className="text-gray-900">14-day free trial</strong>. Cancel before day 15 and you won't be charged.</p>
-            <p className="text-sm text-gray-400 mb-8">Cancel any time.</p>
+            <p className="text-gray-500 text-base max-w-md mx-auto mb-8">
+              Every plan includes a <strong className="text-gray-800">14-day free trial</strong>.
+              Cancel before day 15 — you won't be charged.
+            </p>
 
-            {/* Toggle */}
-            <div className="inline-flex items-center gap-3 bg-gray-100 rounded-xl p-1">
+            {/* Billing toggle */}
+            <div className="inline-flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
               <button
                 onClick={() => setAnnual(false)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${!annual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${!annual ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setAnnual(true)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${annual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${annual ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Annual
-                <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">Save 20%</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-colors ${annual ? 'bg-emerald-400/20 text-emerald-300' : 'bg-emerald-100 text-emerald-600'}`}>
+                  Save 20%
+                </span>
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Cards — 3 equal columns, popular card elevated */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-6 flex flex-col ${
+                className={`relative rounded-2xl flex flex-col transition-all duration-300 ${
                   plan.popular
-                    ? 'bg-indigo-600 text-white ring-2 ring-indigo-600 ring-offset-2'
-                    : 'bg-white border border-gray-100 hover:border-gray-200 hover:shadow-md'
-                } transition-all duration-200`}
+                    ? 'bg-indigo-600 p-8 shadow-2xl shadow-indigo-300/40 scale-[1.04] z-10'
+                    : 'bg-white p-7 border border-gray-200 hover:border-indigo-200 hover:shadow-lg shadow-sm'
+                }`}
               >
+                {/* Most popular badge — inline, top of card */}
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                  <div className="inline-flex items-center gap-1.5 bg-white/15 text-white/90 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full w-fit mb-4">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                     Most popular
                   </div>
                 )}
+
+                {/* Plan name + description */}
                 <div className="mb-5">
-                  <h3 className={`font-bold text-lg mb-0.5 ${plan.popular ? 'text-white' : 'text-gray-900'}`}>{plan.name}</h3>
-                  <p className={`text-sm ${plan.popular ? 'text-indigo-200' : 'text-gray-500'}`}>{plan.description}</p>
+                  <h3 className={`font-bold text-xl mb-1 ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
+                    {plan.name}
+                  </h3>
+                  <p className={`text-sm ${plan.popular ? 'text-indigo-200' : 'text-gray-500'}`}>
+                    {plan.description}
+                  </p>
                 </div>
-                <div className="mb-6">
-                  <div className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
-                    ${annual ? plan.annual : plan.monthly}
-                    <span className={`text-base font-normal ml-1 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>/mo</span>
+
+                {/* Price */}
+                <div className="mb-7">
+                  <div className="flex items-end gap-1">
+                    <span className={`text-5xl font-bold tracking-tight ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
+                      ${annual ? plan.annual : plan.monthly}
+                    </span>
+                    <span className={`text-sm font-normal mb-1.5 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>
+                      /mo
+                    </span>
                   </div>
-                  {annual && (
-                    <div className={`text-xs mt-1 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>
-                      Billed ${(plan as any).annualTotal ?? plan.annual * 12}/year
-                    </div>
-                  )}
+                  <div className={`text-xs mt-1.5 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>
+                    {annual
+                      ? `Billed $${(plan as any).annualTotal ?? plan.annual * 12}/year`
+                      : 'Billed monthly'}
+                  </div>
                 </div>
-                <ul className="space-y-2.5 mb-8 flex-1">
+
+                {/* Divider */}
+                <div className={`h-px w-full mb-6 ${plan.popular ? 'bg-white/10' : 'bg-gray-100'}`} />
+
+                {/* Features */}
+                <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className={`flex items-center gap-2.5 text-sm ${plan.popular ? 'text-indigo-100' : 'text-gray-600'}`}>
-                      <svg className={`w-4 h-4 shrink-0 ${plan.popular ? 'text-indigo-200' : 'text-indigo-500'}`} viewBox="0 0 16 16" fill="none">
-                        <path d="M3 8.5l3.5 3.5 6.5-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      <svg className={`w-4 h-4 shrink-0 ${plan.popular ? 'text-emerald-400' : 'text-indigo-500'}`} viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.3"/>
+                        <path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       {f}
                     </li>
                   ))}
                 </ul>
+
+                {/* CTA */}
                 {plan.name === 'Firm' ? (
                   <a
                     href="mailto:hello@sortify.app"
-                    className="w-full text-center py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all bg-indigo-600 text-white hover:bg-indigo-700 block"
+                    className="w-full text-center py-3 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-150 bg-indigo-600 text-white hover:bg-indigo-700 block"
+                    style={{ transition: 'background 150ms cubic-bezier(0.23,1,0.32,1), transform 150ms cubic-bezier(0.23,1,0.32,1)' }}
                   >
                     {plan.cta}
                   </a>
                 ) : (
-                  <button
-                    onClick={() => handleCheckout(plan.planKey!)}
-                    disabled={checkoutLoading === plan.planKey}
-                    className={`w-full py-2.5 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all disabled:opacity-70 disabled:cursor-wait ${
-                      plan.popular
-                        ? 'bg-white text-indigo-600 hover:bg-indigo-50'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                    }`}
-                  >
-                    {checkoutLoading === plan.planKey ? 'Redirecting…' : plan.cta}
-                  </button>
-                )}
-                {plan.name !== 'Firm' && (
-                  <p className={`text-center text-xs mt-2 ${plan.popular ? 'text-indigo-300' : 'text-gray-400'}`}>
-                    14-day free trial · Cancel anytime
-                  </p>
+                  <>
+                    <button
+                      onClick={() => handleCheckout(plan.planKey!)}
+                      disabled={checkoutLoading === plan.planKey}
+                      className={`w-full py-3 rounded-xl text-sm font-semibold disabled:opacity-60 disabled:cursor-wait ${
+                        plan.popular
+                          ? 'bg-white text-indigo-600 hover:bg-indigo-50'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      }`}
+                      style={{ transition: 'background 150ms cubic-bezier(0.23,1,0.32,1), transform 150ms cubic-bezier(0.23,1,0.32,1)' }}
+                    >
+                      {checkoutLoading === plan.planKey ? 'Redirecting…' : plan.cta}
+                    </button>
+                    <p className={`text-center text-xs mt-2.5 ${plan.popular ? 'text-indigo-300' : 'text-gray-400'}`}>
+                      14-day free trial · Cancel anytime
+                    </p>
+                  </>
                 )}
               </div>
             ))}
           </div>
 
-          <p className="text-center text-sm text-gray-400 mt-8">
-            All plans include SSL, GDPR-ready data handling, and 99.9% uptime SLA. Cancel anytime.
+          {/* Footer note */}
+          <p className="text-center text-sm text-gray-400 mt-10">
+            All plans include SSL encryption, GDPR-ready data handling, and 99.9% uptime SLA.
           </p>
         </div>
       </section>
