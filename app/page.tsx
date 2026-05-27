@@ -280,7 +280,7 @@ export default function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-1.5 mb-8">
               <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
-              From $14/mo · 14-day free trial · No credit card
+              From $14/mo · 14-day free trial · Cancel anytime
             </div>
 
             {/* Headline */}
@@ -495,7 +495,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">
               Simple. No surprises.
             </h2>
-            <p className="text-gray-500 text-lg mb-2">From <strong className="text-gray-900">$14/mo</strong> billed annually. Every plan includes a <strong className="text-gray-900">14-day free trial</strong> — no credit card required to start.</p>
+            <p className="text-gray-500 text-lg mb-2">From <strong className="text-gray-900">$14/mo</strong> billed annually. Every plan includes a <strong className="text-gray-900">14-day free trial</strong>. Cancel before day 15 and you won't be charged.</p>
             <p className="text-sm text-gray-400 mb-8">Cancel any time.</p>
 
             {/* Toggle */}
@@ -578,7 +578,7 @@ export default function Home() {
                 )}
                 {plan.name !== 'Firm' && (
                   <p className={`text-center text-xs mt-2 ${plan.popular ? 'text-indigo-300' : 'text-gray-400'}`}>
-                    14-day free trial · No credit card
+                    14-day free trial · Cancel anytime
                   </p>
                 )}
               </div>
@@ -610,7 +610,7 @@ export default function Home() {
               href="/auth/login?mode=signup"
               className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.97] transition-all text-white font-semibold px-7 py-3.5 rounded-xl shadow-lg shadow-indigo-900/40 text-[15px]"
             >
-              Start free — no credit card
+              Start free trial
               <IconArrowRight />
             </Link>
             <Link
