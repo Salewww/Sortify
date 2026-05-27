@@ -150,7 +150,8 @@ const plans = [
     name: 'Solo',
     planKey: 'solo',
     monthly: 19,
-    annual: 15,
+    annual: 14,       // $170/yr ÷ 12 ≈ $14.17
+    annualTotal: 170,
     description: 'For independent bookkeepers',
     features: ['Unlimited clients', '1 user', 'AI reminder drafts', 'Audit log', 'Document collection', 'Email support'],
     cta: 'Get started',
@@ -161,7 +162,8 @@ const plans = [
     name: 'Team',
     planKey: 'team',
     monthly: 49,
-    annual: 39,
+    annual: 39,       // $470/yr ÷ 12 ≈ $39.17
+    annualTotal: 470,
     description: 'For small firms',
     features: ['Unlimited clients', 'Up to 5 users', 'All Solo features', 'Recurring health checks', 'Priority support', 'Team permissions'],
     cta: 'Get started',
@@ -172,7 +174,8 @@ const plans = [
     name: 'Firm',
     planKey: 'firm',
     monthly: 99,
-    annual: 79,
+    annual: 81,       // $970/yr ÷ 12 ≈ $80.83
+    annualTotal: 970,
     description: 'For growing practices',
     features: ['Unlimited clients', 'Unlimited users', 'White-label portal', 'API access', 'Dedicated onboarding', 'SLA support'],
     cta: 'Contact us',
@@ -564,7 +567,7 @@ export default function Home() {
                       </div>
                       {annual && (
                         <div className={`text-xs mt-1 ${plan.popular ? 'text-indigo-200' : 'text-gray-400'}`}>
-                          Billed ${(annual ? plan.annual : plan.monthly) * 12}/year
+                          Billed ${(plan as any).annualTotal ?? plan.annual * 12}/year
                         </div>
                       )}
                     </>
