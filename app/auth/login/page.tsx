@@ -2,9 +2,16 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/Toast';
 import { getAppVersion } from '@/lib/version';
+
+const PLAN_LABELS: Record<string, string> = {
+  solo: 'Solo — $14/mo billed annually',
+  team: 'Team — $39/mo billed annually',
+  firm: 'Firm — $81/mo billed annually',
+};
 
 function LoginContent() {
   const router = useRouter();
@@ -18,18 +25,41 @@ function LoginContent() {
   const appVersion = getAppVersion();
   const isV2 = appVersion === 'v2';
 
+  // Checkout params passed from pricing buttons
+  const planParam = searchParams.get('plan');
+  const billingParam = searchParams.get('billing') || 'annual';
+  const hasPlan = Boolean(planParam && PLAN_LABELS[planParam]);
+
   useEffect(() => {
     const urlMode = searchParams.get('mode');
-    if (urlMode === 'signup') {
-      setMode('signup');
-    }
+    if (urlMode === 'signup') setMode('signup');
   }, [searchParams]);
+
+  // After auth, trigger Stripe checkout if a plan was selected
+  const redirectAfterAuth = async () => {
+    if (hasPlan) {
+      try {
+        const res = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: planParam, billing: billingParam }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } catch {
+        // fall through to dashboard
+      }
+    }
+    router.push('/dashboard');
+    router.refresh();
+  };
 
   const handleAuth = async (e?: React.FormEvent) => {
     e?.preventDefault();
-
     if (loading) return;
-
     setLoading(true);
     setError(null);
 
@@ -37,40 +67,28 @@ function LoginContent() {
 
     try {
       if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              name: email.split('@')[0],
-            },
-          },
-        });
-
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name: email.split('@')[0] } } });
         if (error) throw error;
 
         if (data.user) {
-          await supabase.from('users').insert({
-            id: data.user.id,
-            email: data.user.email!,
-            name: email.split('@')[0],
-          });
+          // Insert user row (ignore conflict — may already exist)
+          await supabase.from('users').upsert({ id: data.user.id, email: data.user.email!, name: email.split('@')[0] }, { onConflict: 'id' });
 
-          showToast(
-            isV2 ? 'Račun ustvarjen! Preverite e-pošto za potrditev.' : 'Account created! Please check your email to verify.',
-            'success'
-          );
+          if (data.session) {
+            // Email confirmation disabled — user is immediately logged in
+            await redirectAfterAuth();
+          } else {
+            showToast(
+              isV2 ? 'Preverite e-pošto za potrditev računa.' : 'Check your email to confirm your account, then sign in.',
+              'success'
+            );
+            setMode('login');
+          }
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-
-        router.push('/dashboard');
-        router.refresh();
+        await redirectAfterAuth();
       }
     } catch (err: any) {
       setError(err.message);
@@ -80,42 +98,77 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
-      <div className="max-w-md w-full">
-        <div className="card">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Sortify</h1>
-            <p className="text-gray-600">
-              {mode === 'login'
-                ? (isV2 ? 'Prijavite se v svoj račun' : 'Sign in to your account')
-                : (isV2 ? 'Ustvarite svoj račun' : 'Create your account')
-              }
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-6 py-4">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-75 transition-opacity">
+          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </div>
+          <span className="font-semibold text-gray-900 text-[15px]">Sortify</span>
+        </Link>
+        <span className="text-sm text-gray-500">
+          {mode === 'login'
+            ? (isV2 ? 'Nimate računa?' : "Don't have an account?")
+            : (isV2 ? 'Že imate račun?' : 'Already have an account?')}
+          {' '}
+          <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+            {mode === 'login' ? (isV2 ? 'Registracija' : 'Sign up') : (isV2 ? 'Prijava' : 'Sign in')}
+          </button>
+        </span>
+      </div>
+
+      {/* Card */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
+
+          {/* Trial badge — shown when coming from pricing with a plan */}
+          {hasPlan && mode === 'signup' && (
+            <div className="mb-6 flex items-center gap-2.5 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7.5l3.5 3.5 6.5-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-indigo-900">14-day free trial included</div>
+                <div className="text-xs text-indigo-600 mt-0.5">{PLAN_LABELS[planParam!]} · No charge today</div>
+              </div>
+            </div>
+          )}
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1.5">
+              {mode === 'signup'
+                ? (hasPlan
+                    ? (isV2 ? 'Ustvarite brezplačen račun' : 'Create your free account')
+                    : (isV2 ? 'Začnite z Sortify' : 'Get started with Sortify'))
+                : (isV2 ? 'Dobrodošli nazaj' : 'Welcome back')}
+            </h1>
+            <p className="text-gray-500 text-sm">
+              {mode === 'signup'
+                ? (isV2 ? 'Vnesite podatke za ustvaritev računa.' : 'Enter your details to create your account.')
+                : (isV2 ? 'Prijavite se v svoj Sortify račun.' : 'Sign in to your Sortify account.')}
             </p>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-6">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                {isV2 ? 'E-pošta' : 'Email'}
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                {isV2 ? 'E-poštni naslov' : 'Email address'}
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !loading) {
-                    handleAuth();
-                  }
-                }}
                 required
-                className="input"
-                placeholder={isV2 ? 'vas@primer.si' : 'you@example.com'}
+                autoFocus
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white"
+                placeholder={isV2 ? 'vas@primer.si' : 'you@company.com'}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 {isV2 ? 'Geslo' : 'Password'}
               </label>
               <input
@@ -123,20 +176,15 @@ function LoginContent() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !loading) {
-                    handleAuth();
-                  }
-                }}
                 required
                 minLength={6}
-                className="input"
-                placeholder="••••••••"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white"
+                placeholder="Min. 6 characters"
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
@@ -144,29 +192,32 @@ function LoginContent() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-all active:scale-[0.97] disabled:opacity-70 disabled:cursor-wait shadow-sm mt-2"
             >
               {loading
-                ? (isV2 ? 'Nalaganje...' : 'Loading...')
-                : mode === 'login'
-                  ? (isV2 ? 'Prijava' : 'Sign In')
-                  : (isV2 ? 'Registracija' : 'Sign Up')
-              }
+                ? (isV2 ? 'Nalaganje...' : 'Loading…')
+                : mode === 'signup'
+                  ? (hasPlan
+                      ? (isV2 ? 'Ustvari račun in začni preizkus' : 'Create account & start trial')
+                      : (isV2 ? 'Ustvari račun' : 'Create account'))
+                  : (isV2 ? 'Prijava' : 'Sign in')}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-              className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-            >
-              {mode === 'login'
-                ? (isV2 ? 'Nimate računa? Registrirajte se' : "Don't have an account? Sign up")
-                : (isV2 ? 'Že imate račun? Prijavite se' : 'Already have an account? Sign in')
-              }
-            </button>
-          </div>
+          {mode === 'signup' && (
+            <p className="text-xs text-gray-400 text-center mt-4 leading-relaxed">
+              {isV2
+                ? 'Z ustvarjanjem računa se strinjate z našimi '
+                : 'By creating an account you agree to our '}
+              <Link href="/terms" className="text-gray-600 hover:text-gray-900 underline underline-offset-2 transition-colors">
+                {isV2 ? 'Pogoji uporabe' : 'Terms of Service'}
+              </Link>
+              {' & '}
+              <Link href="/privacy" className="text-gray-600 hover:text-gray-900 underline underline-offset-2 transition-colors">
+                {isV2 ? 'Politiko zasebnosti' : 'Privacy Policy'}
+              </Link>.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -176,8 +227,8 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <LoginContent />

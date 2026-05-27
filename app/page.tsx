@@ -193,7 +193,7 @@ export default function Home() {
       });
       if (res.status === 401) {
         // Not logged in — send to signup first, then we'll redirect back
-        router.push(`/auth/login?mode=signup&redirect=/pricing`);
+        router.push(`/auth/login?mode=signup&plan=${planKey}&billing=${annual ? 'annual' : 'monthly'}`);
         return;
       }
       const data = await res.json();
@@ -280,7 +280,7 @@ export default function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-1.5 mb-8">
               <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
-              Trusted by 500+ bookkeepers worldwide
+              From $14/mo · 14-day free trial · No credit card
             </div>
 
             {/* Headline */}
@@ -458,7 +458,7 @@ export default function Home() {
                   <td className="px-5 py-3.5 font-bold text-indigo-900 flex items-center gap-2">
                     Sortify <span className="text-[10px] bg-indigo-600 text-white rounded px-1.5 py-0.5 font-semibold uppercase tracking-wide">You are here</span>
                   </td>
-                  <td className="px-5 py-3.5 text-center font-bold text-indigo-700">From $19/mo</td>
+                  <td className="px-5 py-3.5 text-center font-bold text-indigo-700">From $14/mo</td>
                   <td className="px-5 py-3.5 text-center text-indigo-600 font-bold">✓</td>
                   <td className="px-5 py-3.5 text-center text-indigo-600 font-bold">✓</td>
                 </tr>
@@ -495,7 +495,8 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">
               Simple. No surprises.
             </h2>
-            <p className="text-gray-500 text-lg mb-8">Start free. Upgrade when you're ready.</p>
+            <p className="text-gray-500 text-lg mb-2">From <strong className="text-gray-900">$14/mo</strong> billed annually. Every plan includes a <strong className="text-gray-900">14-day free trial</strong> — no credit card required to start.</p>
+            <p className="text-sm text-gray-400 mb-8">Cancel any time.</p>
 
             {/* Toggle */}
             <div className="inline-flex items-center gap-3 bg-gray-100 rounded-xl p-1">
@@ -610,7 +611,7 @@ export default function Home() {
             Ready to stop chasing clients?
           </h2>
           <p className="text-gray-400 text-lg mb-10">
-            Join 500+ bookkeepers who've reclaimed their time. Free forever for up to 3 clients.
+            Join bookkeepers worldwide who've reclaimed their time. Start your 14-day free trial — from $14/mo after that.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
