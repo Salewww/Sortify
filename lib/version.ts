@@ -5,19 +5,21 @@
  */
 
 export function getAppVersion(): 'v1' | 'v2' {
-  // Check multiple sources for version detection
-  if (typeof window !== 'undefined') {
-    // Client-side: check port from window.location
-    const port = window.location.port
-    return port === '3007' ? 'v2' : 'v1'
-  }
-
-  // Server-side: check env variables
+  // Server-side: env var is baked in at build time by next.config.js
   const appVersion = process.env.APP_VERSION || process.env.NEXT_PUBLIC_APP_VERSION
   if (appVersion === 'v2') return 'v2'
 
+  // Client-side fallback: check port (covers legacy :3007 and new :8005)
+  if (typeof window !== 'undefined') {
+    const port = window.location.port
+    if (port === '3007' || port === '8005') return 'v2'
+  }
+
+  // Server-side port fallback
   const port = process.env.PORT
-  return port === '3007' ? 'v2' : 'v1'
+  if (port === '3007' || port === '8005') return 'v2'
+
+  return 'v1'
 }
 
 export function isV2() {

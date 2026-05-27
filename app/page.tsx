@@ -136,17 +136,6 @@ function DashboardMockup() {
 
 const plans = [
   {
-    name: 'Free',
-    planKey: null,
-    monthly: 0,
-    annual: 0,
-    description: 'Try it risk-free',
-    features: ['3 clients', '1 user', 'Core portal links', 'Basic progress tracking', 'No credit card required'],
-    cta: 'Start free',
-    popular: false,
-    ghost: true,
-  },
-  {
     name: 'Solo',
     planKey: 'solo',
     monthly: 19,
@@ -250,16 +239,17 @@ export default function Home() {
       {/* ── NAV ── */}
       <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm' : 'bg-transparent'}`}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+          <Link href="/" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
             <span className="text-[15px] font-semibold tracking-tight text-gray-900">Sortify</span>
-          </div>
+          </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-500 font-medium">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>
             <a href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</a>
+            <Link href="/demo" className="hover:text-gray-900 transition-colors">Demo</Link>
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/auth/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-1.5">
@@ -314,29 +304,17 @@ export default function Home() {
                 Start free — no credit card
                 <IconArrowRight />
               </Link>
-              <a
-                href="#how-it-works"
+              <Link
+                href="/demo"
                 className="inline-flex items-center gap-2 text-gray-300 hover:text-white active:scale-[0.97] transition-all font-medium px-6 py-3 rounded-xl border border-white/10 hover:border-white/20 text-[15px]"
               >
-                See how it works →
-              </a>
+                See live demo →
+              </Link>
             </div>
           </div>
 
           {/* Dashboard mockup */}
           <DashboardMockup />
-        </div>
-      </section>
-
-      {/* ── LOGOS STRIP ── */}
-      <section className="border-y border-gray-100 bg-gray-50 py-7">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">Used by teams at</p>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14">
-            {['Greenfield CPA', 'Orbit Accounting', 'Beacon Books', 'Summit Tax Co.', 'Clover Advisory'].map((firm) => (
-              <span key={firm} className="text-sm font-semibold text-gray-400 tracking-tight">{firm}</span>
-            ))}
-          </div>
         </div>
       </section>
 

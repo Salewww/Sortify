@@ -11,11 +11,11 @@ const nextConfig = {
     domains: [],
   },
   typescript: {
-    // Allow production builds to complete even with type errors
     ignoreBuildErrors: true,
   },
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   env: {
-    APP_VERSION: process.env.PORT === '3007' ? 'v2' : 'v1',
+    APP_VERSION: process.env.PORT === '8005' ? 'v2' : 'v1',
   },
   turbopack: {
     root: __dirname,
