@@ -75,6 +75,13 @@ function LoginContent() {
           // Insert user row (ignore conflict — may already exist)
           await supabase.from('users').upsert({ id: data.user.id, email: data.user.email!, name: email.split('@')[0] }, { onConflict: 'id' });
 
+          // Fire welcome email (non-blocking)
+          fetch('/api/emails/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: data.user.email, name: email.split('@')[0] }),
+          }).catch(() => {});
+
           if (data.session) {
             // Email confirmation disabled — user is immediately logged in
             await redirectAfterAuth();
