@@ -132,6 +132,108 @@ function DashboardMockup() {
   );
 }
 
+// ─── Testimonials ────────────────────────────────────────────────────────────
+
+const TESTIMONIALS = [
+  {
+    quote: "I used to spend an hour a week chasing clients for QuickBooks access. With Sortify, that's down to five minutes — and I actually have an audit trail now.",
+    name: 'Jessica M.',
+    role: 'Solo bookkeeper, Austin TX',
+    initials: 'JM',
+  },
+  {
+    quote: "My clients love the portal. No more back-and-forth emails about which documents to send. I can see exactly where each client is stuck and jump in before it becomes a problem.",
+    name: 'Marcus T.',
+    role: 'Bookkeeper, Chicago IL',
+    initials: 'MT',
+  },
+  {
+    quote: "Onboarding a new client used to take two weeks of follow-up emails. Now I send one link and they're done in a day. The AI-generated checklists save me hours of setup.",
+    name: 'Sarah L.',
+    role: 'Accounting firm owner, Seattle WA',
+    initials: 'SL',
+  },
+  {
+    quote: "The audit log alone is worth the subscription. When a client says they never received instructions, I can show exactly when they viewed and completed every step.",
+    name: 'David K.',
+    role: 'Senior bookkeeper, New York NY',
+    initials: 'DK',
+  },
+  {
+    quote: "Switched from a manual spreadsheet process three months ago. My clients complete onboarding four times faster. The document upload feature is exactly what I needed.",
+    name: 'Rachel P.',
+    role: 'Independent bookkeeper, Denver CO',
+    initials: 'RP',
+  },
+];
+
+function TestimonialsSection() {
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % TESTIMONIALS.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const t = TESTIMONIALS[activeIdx];
+
+  return (
+    <section className="py-16 md:py-20 bg-indigo-600 overflow-hidden">
+      <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="text-indigo-300/60 text-5xl font-serif leading-none mb-4 select-none">&ldquo;</div>
+
+        {/* Quote — fixed min-height so dots don't jump */}
+        <div className="relative min-h-[160px] md:min-h-[140px] flex flex-col justify-center">
+          {TESTIMONIALS.map((item, i) => (
+            <div
+              key={i}
+              className="transition-all duration-500 ease-in-out"
+              style={{
+                opacity: i === activeIdx ? 1 : 0,
+                transform: i === activeIdx ? 'translateY(0)' : 'translateY(8px)',
+                position: i === activeIdx ? 'relative' : 'absolute',
+                inset: i === activeIdx ? undefined : '0',
+                pointerEvents: i === activeIdx ? 'auto' : 'none',
+              }}
+            >
+              <blockquote className="text-white text-lg md:text-xl font-medium leading-relaxed mb-8">
+                {item.quote}
+              </blockquote>
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                  {item.initials}
+                </div>
+                <div className="text-left">
+                  <div className="text-white font-semibold text-sm">{item.name}</div>
+                  <div className="text-indigo-200 text-xs">{item.role}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Navigation dots */}
+        <div className="flex items-center justify-center gap-2 mt-8">
+          {TESTIMONIALS.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIdx(i)}
+              aria-label={`Go to testimonial ${i + 1}`}
+              className={`rounded-full transition-all duration-300 ${
+                i === activeIdx
+                  ? 'w-5 h-2 bg-white'
+                  : 'w-2 h-2 bg-white/30 hover:bg-white/60'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Pricing toggle ───────────────────────────────────────────────────────────
 
 const plans = [
@@ -468,24 +570,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── TESTIMONIAL ── */}
-      <section className="py-16 md:py-20 bg-indigo-600">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <div className="text-indigo-200 text-4xl mb-6">"</div>
-          <blockquote className="text-white text-xl md:text-2xl font-medium leading-relaxed mb-8">
-            I used to spend an hour a week chasing clients for QuickBooks access. With Sortify, that's down to five minutes — and I actually have an audit trail now.
-          </blockquote>
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-400/40 flex items-center justify-center text-white font-bold">
-              JM
-            </div>
-            <div className="text-left">
-              <div className="text-white font-semibold text-sm">Jessica M.</div>
-              <div className="text-indigo-200 text-xs">Solo bookkeeper, Austin TX</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── TESTIMONIALS SLIDESHOW ── */}
+      <TestimonialsSection />
 
       {/* ── PRICING ── */}
       <section id="pricing" className="py-24 md:py-32 bg-gray-50/60">
