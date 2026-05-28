@@ -144,7 +144,7 @@ const plans = [
     description: 'For independent bookkeepers',
     features: ['Unlimited clients', '1 user', 'AI reminder drafts', 'Audit log', 'Document collection', 'Email support'],
     cta: 'Get started',
-    popular: true,
+    popular: false,
     ghost: false,
   },
   {
@@ -156,7 +156,7 @@ const plans = [
     description: 'For small firms',
     features: ['Unlimited clients', 'Up to 5 users', 'All Solo features', 'Recurring health checks', 'Priority support', 'Team permissions'],
     cta: 'Get started',
-    popular: false,
+    popular: true,
     ghost: false,
   },
   {
@@ -523,7 +523,7 @@ export default function Home() {
           </div>
 
           {/* Cards — 3 equal columns, popular card elevated */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
             {plans.map((plan) => (
               <div
                 key={plan.name}
