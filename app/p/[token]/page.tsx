@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import { calculateProgress } from '@/lib/utils';
 import PortalTaskCard from '@/components/PortalTaskCard';
@@ -13,6 +14,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
     .select(`
       id,
       name,
+      owner_user_id,
       client_checklists (
         id,
         type,
@@ -31,6 +33,19 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
 
   if (error || !client) {
     notFound();
+  }
+
+  // SRT-005: fetch bookkeeper's email to replace placeholder in task instructions
+  let bookkeeperEmail = '';
+  try {
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { data: ownerData } = await adminClient.auth.admin.getUserById((client as any).owner_user_id);
+    bookkeeperEmail = ownerData?.user?.email || '';
+  } catch {
+    // non-fatal — falls back to generic text
   }
 
   const onboardingChecklist = client.client_checklists.find((c: any) => c.type === 'onboarding');
@@ -140,6 +155,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
                     taskInstance={taskInstance}
                     checklistId={onboardingChecklist.id}
                     token={token}
+                    bookkeeperEmail={bookkeeperEmail}
                   />
                 ))}
               </div>

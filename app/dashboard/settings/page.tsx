@@ -227,7 +227,9 @@ export default function SettingsPage() {
                 {profile?.subscription_status === 'active' ? (isV2 ? 'Aktivna' : 'Active')
                   : profile?.subscription_status === 'trialing' ? (isV2 ? '14-dnevni preizkus' : '14-day trial')
                   : profile?.subscription_status === 'past_due' ? (isV2 ? 'Zamuda pri plačilu' : 'Payment past due')
-                  : (isV2 ? 'Neaktivna' : 'Inactive')}
+                  : (!profile?.subscription_plan || profile?.subscription_plan === 'free')
+                    ? (isV2 ? 'Brezplačni načrt' : 'Free plan')
+                    : (isV2 ? 'Neaktivna' : 'Inactive')}
               </div>
             </div>
             {(!profile?.subscription_plan || profile?.subscription_plan === 'free') && (

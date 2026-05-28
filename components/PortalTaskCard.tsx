@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { renderMarkdown } from '@/lib/renderMarkdown';
 
 export default function PortalTaskCard({
   taskInstance,
   checklistId,
   token,
+  bookkeeperEmail,
 }: {
   taskInstance: any;
   checklistId: string;
   token: string;
+  bookkeeperEmail?: string;
 }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
@@ -181,9 +184,19 @@ export default function PortalTaskCard({
           {/* Expanded Instructions */}
           {expanded && taskInstance.status !== 'done' && (
             <div className="mt-4 space-y-4">
-              {/* Instructions */}
+              {/* Instructions — SRT-003: render markdown, SRT-005: replace placeholder email */}
               <div className="prose prose-sm">
-                <div className="text-sm text-gray-700 whitespace-pre-wrap">{task.instructions_md}</div>
+                <div
+                  className="text-sm text-gray-700 space-y-1"
+                  dangerouslySetInnerHTML={{
+                    __html: renderMarkdown(
+                      (task.instructions_md || '').replace(
+                        /accounting@yourfirm\.com/g,
+                        bookkeeperEmail || 'your bookkeeper'
+                      )
+                    ),
+                  }}
+                />
                 {task.help_url && (
                   <a
                     href={task.help_url}
