@@ -32,6 +32,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // SRT-002: /pricing is not a real route — redirect to homepage anchor
+  if (request.nextUrl.pathname === '/pricing') {
+    return NextResponse.redirect(new URL('/#pricing', request.url))
+  }
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/auth') &&

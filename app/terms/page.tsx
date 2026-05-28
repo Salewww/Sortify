@@ -151,6 +151,11 @@ export default function TermsPage() {
             </p>
           </section>
 
+          {/* Back to home — bottom (SRT-008) */}
+          <div className="mt-12 pt-8 border-t border-gray-100">
+            <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">← Back to home</Link>
+          </div>
+
         </div>
       </main>
 

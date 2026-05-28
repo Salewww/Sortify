@@ -430,8 +430,8 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm">
+            <table className="w-full text-sm min-w-[520px]">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="text-left px-5 py-3 font-semibold text-gray-700">Tool</th>

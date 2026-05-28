@@ -48,17 +48,29 @@ function StatusBadge({ status }: { status: string }) {
 export default function DemoPage() {
   const [activeTab, setActiveTab] = useState<'clients' | 'tasks' | 'documents'>('clients');
   const [selectedClient, setSelectedClient] = useState<number | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(true);
   const client = CLIENTS.find(c => c.id === selectedClient);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top banner */}
-      <div className="bg-indigo-600 text-white text-center py-3 px-4 text-sm font-medium flex items-center justify-center gap-4">
-        <span>👀 You&apos;re viewing a live demo — no account needed</span>
-        <Link href="/auth/login?mode=signup" className="bg-white text-indigo-600 hover:bg-indigo-50 font-semibold px-4 py-1 rounded-lg text-xs transition-colors active:scale-[0.97]">
-          Start free trial →
-        </Link>
-      </div>
+      {/* Top banner — dismissible (SRT-007) */}
+      {bannerVisible && (
+        <div className="bg-indigo-600 text-white text-center py-3 px-4 text-sm font-medium flex items-center justify-center gap-4 relative">
+          <span>👀 You&apos;re viewing a live demo — no account needed</span>
+          <Link href="/auth/login?mode=signup" className="bg-white text-indigo-600 hover:bg-indigo-50 font-semibold px-4 py-1 rounded-lg text-xs transition-colors active:scale-[0.97]">
+            Start free trial →
+          </Link>
+          <button
+            onClick={() => setBannerVisible(false)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-200 hover:text-white transition-colors p-1"
+            aria-label="Dismiss banner"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M1 1l12 12M13 1L1 13"/>
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Shell */}
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 88px)' }}>
