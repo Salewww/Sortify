@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
   const appVersion = getAppVersion();
   const isV2 = appVersion === 'v2';
   const searchParams = useSearchParams();
@@ -249,6 +250,26 @@ export default function SettingsPage() {
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-70"
               >
                 {checkoutLoading === 'solo' ? 'Redirecting…' : (isV2 ? 'Nadgradi' : 'Upgrade')}
+              </button>
+            )}
+            {profile?.subscription_plan && profile.subscription_plan !== 'free' && (
+              <button
+                onClick={async () => {
+                  setPortalLoading(true);
+                  const res = await fetch('/api/stripe/portal', { method: 'POST' });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                  else {
+                    setPortalLoading(false);
+                    setMessage(isV2
+                      ? 'Napaka: ' + (data.error || 'Portala ni mogoče odpreti')
+                      : 'Error: ' + (data.error || 'Could not open billing portal'));
+                  }
+                }}
+                disabled={portalLoading}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-70"
+              >
+                {portalLoading ? 'Redirecting…' : (isV2 ? 'Upravljaj plačila' : 'Manage billing')}
               </button>
             )}
           </div>
